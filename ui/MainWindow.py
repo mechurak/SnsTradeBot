@@ -1,6 +1,10 @@
+import logging
 from PyQt5.QtWidgets import *
 from PyQt5.QAxContainer import *
 from PyQt5 import uic
+
+
+logger = logging.getLogger(__name__)
 
 
 class MainWindow(QMainWindow):
