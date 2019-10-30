@@ -4,6 +4,8 @@ import logging
 from datetime import datetime
 from PyQt5.QtWidgets import QApplication
 from ui.MainWindow import MainWindow
+import slack.run
+import threading
 
 # Setup root logger
 logger = logging.getLogger()
@@ -25,6 +27,12 @@ logger.addHandler(stream_handler)
 
 if __name__ == "__main__":
     logger.info("===== Start SnsTradeBot ======")
+
+    # Run slackbot
+    sys.path.append(os.getcwd() + "\\slack")
+    t = threading.Thread(target=slack.run.main)
+    t.start()
+
     app = QApplication(sys.argv)
     mainWindow = MainWindow()
     mainWindow.show()
