@@ -4,7 +4,7 @@ import logging
 from slackbot.bot import Bot
 
 
-def main():
+def start():
     bot = Bot()
     bot.run()
 
@@ -16,4 +16,4 @@ if __name__ == "__main__":
     stream_handler = logging.StreamHandler()
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
-    main()
+    start()

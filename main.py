@@ -3,7 +3,8 @@ import os
 import logging
 from datetime import datetime
 from PyQt5.QtWidgets import QApplication
-from ui.MainWindow import MainWindow
+from ui.main_window import MainWindow
+from kiwoom.kiwoom import Kiwoom
 import slack.run
 import threading
 
@@ -30,10 +31,14 @@ if __name__ == "__main__":
 
     # Run slackbot
     sys.path.append(os.getcwd() + "\\slack")
-    t = threading.Thread(target=slack.run.main)
+    t = threading.Thread(target=slack.run.start)
     t.start()
 
     app = QApplication(sys.argv)
     mainWindow = MainWindow()
+    kiwoom = Kiwoom()
+    mainWindow.set_listener(kiwoom)
+    kiwoom.comm_connect()
+
     mainWindow.show()
     sys.exit(app.exec_())
