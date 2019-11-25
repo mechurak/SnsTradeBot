@@ -1,9 +1,9 @@
 import sys
 import logging
+from abc import abstractmethod
 from PyQt5.QtWidgets import *
 from PyQt5.QAxContainer import *
 from PyQt5.QtCore import *
-from ui.main_window import MyListener
 
 
 logger = logging.getLogger(__name__)
@@ -11,19 +11,31 @@ logger = logging.getLogger(__name__)
 TR_REQ_TIME_INTERVAL = 0.2
 
 
-class Kiwoom(QAxWidget, MyListener):
+class KiwoomListener:
+    @abstractmethod
+    def on_connect(self, err_code):
+        pass
+
+    @abstractmethod
+    def on_receive_tr_data(self):
+        pass
+
+    @abstractmethod
+    def on_receive_chejan_data(self):
+        pass
+
+
+class Kiwoom(QAxWidget):
     def __init__(self):
         super().__init__()
-        self._create_kiwoom_instance()
-        self._set_signal_slots()
-
-    def _create_kiwoom_instance(self):
         self.setControl("KHOPENAPI.KHOpenAPICtrl.1")
+        self.listener = None
 
-    def _set_signal_slots(self):
-        self.OnEventConnect.connect(self._event_connect)
-        self.OnReceiveTrData.connect(self._receive_tr_data)
-        self.OnReceiveChejanData.connect(self._receive_chejan_data)
+    def set_listener(self, the_listener):
+        self.listener = the_listener
+        self.OnEventConnect.connect(self.listener.on_connect)
+        self.OnReceiveTrData.connect(self.listener.on_receive_tr_data)
+        self.OnReceiveChejanData.connect(self.listener.on_receive_chejan_data)
 
     def comm_connect(self):
         self.dynamicCall("CommConnect()")
@@ -33,6 +45,10 @@ class Kiwoom(QAxWidget, MyListener):
     def _event_connect(self, err_code):
         if err_code == 0:
             logger.info("connected")
+            account_num = self.dynamicCall("GetLoginInfo(QString)", "ACCNO")
+            account_num = account_num[:-1]
+            account_list = account_num.split(";")
+            logger.info("account_list: %s", account_list)
         else:
             logger.info("disconnected")
 
@@ -109,34 +125,52 @@ class Kiwoom(QAxWidget, MyListener):
         return ret
 
     def _receive_chejan_data(self, gubun, item_cnt, fid_list):
-        print(gubun)
-        print(self.get_chejan_data(9203))
-        print(self.get_chejan_data(302))
-        print(self.get_chejan_data(900))
-        print(self.get_chejan_data(901))
+        logger(gubun)
+        logger(self.get_chejan_data(9203))
+        logger(self.get_chejan_data(302))
+        logger(self.get_chejan_data(900))
+        logger(self.get_chejan_data(901))
 
     def get_login_info(self, tag):
         ret = self.dynamicCall("GetLoginInfo(QString)", tag)
         return ret
 
-    def btn1_clicked(self):
-        logger.info("btn1_clicked")
-        pass
-
-    def btn2_clicked(self):
-        logger.info("btn2_clicked")
-        pass
-
 
 if __name__ == "__main__":
+    logger.setLevel(logging.DEBUG)
+    stream_handler = logging.StreamHandler()
+    logger.addHandler(stream_handler)
+
+    class TempKiwoomListener(KiwoomListener):
+        def on_connect(self, err_code):
+            if err_code == 0:
+                logger.info("connected")
+                account_num = self.dynamicCall("GetLoginInfo(QString)", "ACCNO")
+                account_num = account_num[:-1]
+                account_list = account_num.split(";")
+                logger.info("account_list: %s", account_list)
+            else:
+                logger.info("disconnected")
+
+            super.login_event_loop.exit()
+
+        def on_receive_tr_data(self):
+            logger.info("on_receive_tr_data")
+
+        def on_receive_chejan_data(self):
+            logger.info("on_receive_chejan_data")
+
     app = QApplication(sys.argv)
     tempWindow = QMainWindow()
-    kiwoom = Kiwoom()
-    kiwoom.comm_connect()
-    code_list = kiwoom.get_code_list_by_market('10')
+    tempManager = TempKiwoomListener()
+    kiwoom_api = Kiwoom()
+    kiwoom_api.set_listener(tempManager)
+
+    kiwoom_api.comm_connect()
+    code_list = kiwoom_api.get_code_list_by_market('10')
     for code in code_list:
-        print(code, end=" ")
-    print("\n")
-    print(kiwoom.get_master_code_name("000660"))
+        logger(code, end=" ")
+    logger("\n")
+    logger(kiwoom_api.get_master_code_name("000660"))
     tempWindow.show()
     sys.exit(app.exec_())

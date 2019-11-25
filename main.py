@@ -1,10 +1,12 @@
 import sys
 import os
 import logging
+from abc import ABC
 from datetime import datetime
 from PyQt5.QtWidgets import QApplication
 from ui.main_window import MainWindow
-from kiwoom.kiwoom import Kiwoom
+from ui.main_window import MyListener
+from openapi.kiwoom import Kiwoom
 import slack.run
 import threading
 
@@ -26,6 +28,16 @@ logger.addHandler(file_handler)
 logger.addHandler(stream_handler)
 
 
+class Manager(MyListener):
+    def account_changed(self, the_account):
+        logger.info("account_changed. the_account: %s", the_account)
+        pass
+
+    def balance_btn_clicked(self):
+        logger.info("balance_btn_clicked")
+        pass
+
+
 if __name__ == "__main__":
     logger.info("===== Start SnsTradeBot ======")
 
@@ -35,10 +47,12 @@ if __name__ == "__main__":
     t.start()
 
     app = QApplication(sys.argv)
-    mainWindow = MainWindow()
-    kiwoom = Kiwoom()
-    mainWindow.set_listener(kiwoom)
-    kiwoom.comm_connect()
+    manager = Manager()
+    main_window = MainWindow()
+    main_window.set_listener(manager)
 
-    mainWindow.show()
+    kiwoom_api = Kiwoom()
+    kiwoom_api.comm_connect()
+
+    main_window.show()
     sys.exit(app.exec_())
