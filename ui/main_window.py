@@ -10,6 +10,9 @@ logger = logging.getLogger(__name__)
 
 
 class MyListener:
+    """
+    Listen user action
+    """
     @abstractmethod
     def account_changed(self, the_account):
         pass

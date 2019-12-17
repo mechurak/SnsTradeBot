@@ -12,6 +12,9 @@ TR_REQ_TIME_INTERVAL = 0.2
 
 
 class KiwoomListener:
+    """
+    Notify kiwoom events to UI
+    """
     @abstractmethod
     def on_connect(self, err_code):
         pass
@@ -29,13 +32,11 @@ class Kiwoom(QAxWidget):
     def __init__(self):
         super().__init__()
         self.setControl("KHOPENAPI.KHOpenAPICtrl.1")
+        self.OnEventConnect.connect(self._event_connect)
         self.listener = None
 
     def set_listener(self, the_listener):
         self.listener = the_listener
-        self.OnEventConnect.connect(self.listener.on_connect)
-        self.OnReceiveTrData.connect(self.listener.on_receive_tr_data)
-        self.OnReceiveChejanData.connect(self.listener.on_receive_chejan_data)
 
     def comm_connect(self):
         self.dynamicCall("CommConnect()")
@@ -51,8 +52,9 @@ class Kiwoom(QAxWidget):
             logger.info("account_list: %s", account_list)
         else:
             logger.info("disconnected")
-
         self.login_event_loop.exit()
+        if self.listener:
+            self.listener.on_connect(err_code)
 
     def get_code_list_by_market(self, market):
         code_list = self.dynamicCall("GetCodeListByMarket(QString)", market)
@@ -125,11 +127,11 @@ class Kiwoom(QAxWidget):
         return ret
 
     def _receive_chejan_data(self, gubun, item_cnt, fid_list):
-        logger(gubun)
-        logger(self.get_chejan_data(9203))
-        logger(self.get_chejan_data(302))
-        logger(self.get_chejan_data(900))
-        logger(self.get_chejan_data(901))
+        logger.info(gubun)
+        logger.info(self.get_chejan_data(9203))
+        logger.info(self.get_chejan_data(302))
+        logger.info(self.get_chejan_data(900))
+        logger.info(self.get_chejan_data(901))
 
     def get_login_info(self, tag):
         ret = self.dynamicCall("GetLoginInfo(QString)", tag)
@@ -143,16 +145,7 @@ if __name__ == "__main__":
 
     class TempKiwoomListener(KiwoomListener):
         def on_connect(self, err_code):
-            if err_code == 0:
-                logger.info("connected")
-                account_num = self.dynamicCall("GetLoginInfo(QString)", "ACCNO")
-                account_num = account_num[:-1]
-                account_list = account_num.split(";")
-                logger.info("account_list: %s", account_list)
-            else:
-                logger.info("disconnected")
-
-            super.login_event_loop.exit()
+            logger.info("on_connect!!! in ui. err_code: %d", err_code)
 
         def on_receive_tr_data(self):
             logger.info("on_receive_tr_data")
@@ -169,8 +162,7 @@ if __name__ == "__main__":
     kiwoom_api.comm_connect()
     code_list = kiwoom_api.get_code_list_by_market('10')
     for code in code_list:
-        logger(code, end=" ")
-    logger("\n")
-    logger(kiwoom_api.get_master_code_name("000660"))
+        logger.info(code)
+    logger.info(kiwoom_api.get_master_code_name("000660"))
     tempWindow.show()
     sys.exit(app.exec_())
