@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QApplication
 from ui.main_window import MainWindow
 from ui.main_window import MyListener
 from openapi.kiwoom import Kiwoom
+from model.model import Model
 import slack.run
 import threading
 
@@ -29,6 +30,9 @@ logger.addHandler(stream_handler)
 
 
 class Manager(MyListener):
+    def __init__(self, the_model):
+        self.model = the_model
+
     def account_changed(self, the_account):
         logger.info("account_changed. the_account: %s", the_account)
         pass
@@ -47,11 +51,12 @@ if __name__ == "__main__":
     t.start()
 
     app = QApplication(sys.argv)
-    manager = Manager()
-    main_window = MainWindow()
+    model = Model()
+    manager = Manager(model)
+    main_window = MainWindow(model)
     main_window.set_listener(manager)
 
-    kiwoom_api = Kiwoom()
+    kiwoom_api = Kiwoom(model)
     kiwoom_api.comm_connect()
 
     main_window.show()

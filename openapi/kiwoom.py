@@ -4,6 +4,7 @@ from abc import abstractmethod
 from PyQt5.QtWidgets import *
 from PyQt5.QAxContainer import *
 from PyQt5.QtCore import *
+from model.model import Model
 
 
 logger = logging.getLogger(__name__)
@@ -29,11 +30,16 @@ class KiwoomListener:
 
 
 class Kiwoom(QAxWidget):
-    def __init__(self):
+    model = None
+    listener = None
+    login_event_loop = None
+    tr_event_loop = None
+
+    def __init__(self, the_model):
         super().__init__()
+        self.model = the_model
         self.setControl("KHOPENAPI.KHOpenAPICtrl.1")
         self.OnEventConnect.connect(self._event_connect)
-        self.listener = None
 
     def set_listener(self, the_listener):
         self.listener = the_listener
@@ -156,7 +162,8 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     tempWindow = QMainWindow()
     tempManager = TempKiwoomListener()
-    kiwoom_api = Kiwoom()
+    model = Model()
+    kiwoom_api = Kiwoom(model)
     kiwoom_api.set_listener(tempManager)
 
     kiwoom_api.comm_connect()

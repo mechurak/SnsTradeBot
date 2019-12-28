@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+from model.model import Model
 from abc import abstractmethod
 
 from PyQt5 import uic
@@ -23,11 +24,15 @@ class MyListener:
 
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    model = None
+    ui = None
+    listener = None
+
+    def __init__(self, the_model):
         super().__init__()
+        self.model = the_model
         abspath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "MainWindow.ui")
         self.ui = uic.loadUi(abspath, self)
-        self.listener = None
 
     def set_listener(self, the_listener):
         self.listener = the_listener
@@ -55,7 +60,8 @@ if __name__ == "__main__":
             pass
 
     app = QApplication(sys.argv)
-    mainWindow = MainWindow()
+    model = Model()
+    mainWindow = MainWindow(model)
     listener = TempListener()
     mainWindow.set_listener(listener)
     mainWindow.set_account_list(['5055378411', '5075289111'], '5055378411')

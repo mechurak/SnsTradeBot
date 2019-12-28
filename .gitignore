@@ -9,3 +9,6 @@ log/
 
 # api key
 keys.py
+
+# local save file
+my_stock_list.json
