@@ -6,48 +6,85 @@ logger = logging.getLogger(__name__)
 
 
 class Stock:
-    code = '00000'  # 종목코드
-    name = 'UNKNOWN'  # 종목명
-    cur_price = 0  # 현재가
-    buy_price = 0  # 매입가
-    quantity = 0  # 보유수량
-    earning_rate = 0.0  # 수익률
-    buy_strategy_list = []
-    sell_strategy_list = []
-    target_quantity = 0  # 목표보유수량
-
     def __init__(self, the_code):
-        self.code = the_code
+        self.code = the_code  # 종목코드
+        self.name = 'UNDEFINED'  # 종목명
+        self.cur_price = 0  # 현재가
+        self.buy_price = 0  # 매입가
+        self.quantity = 0  # 보유수량
+        self.earning_rate = 0.0  # 수익률
+        self.buy_strategy_dic = {}
+        self.sell_strategy_dic = {}
+        self.target_quantity = 0  # 목표보유수량
 
     def __str__(self):
-        return f'({self.code} {self.name} {self.cur_price} {self.buy_price} {self.quantity} {self.target_quantity})'
+        return f'({self.code} {self.name} {self.cur_price} {self.buy_price} {self.quantity}' \
+               f' {list(self.buy_strategy_dic.keys())} {list(self.sell_strategy_dic.keys())} {self.target_quantity})'
 
     def get_dic(self):
         ret = {
             "code": self.code,
             "name": self.name,
+            "buy_strategy_dic": {},
+            "sell_strategy_dic": {},
             "target_quantity": self.target_quantity
         }
+        for k, v in self.buy_strategy_dic.items():
+            ret['buy_strategy_dic'][k] = v.get_param_dic()
+        for k, v in self.sell_strategy_dic.items():
+            ret['sell_strategy_dic'][k] = v.get_param_dic()
         return ret
+
+    def add_buy_strategy(self, the_strategy_name, the_param_dic):
+        from strategy.buy_just_buy import BuyJustBuy
+        from strategy.buy_on_opening import BuyOnOpening
+        if the_strategy_name == 'buy_just_buy':
+            self.buy_strategy_dic[the_strategy_name] = BuyJustBuy(self, the_param_dic)
+        if the_strategy_name == 'buy_on_opening':
+            self.buy_strategy_dic[the_strategy_name] = BuyOnOpening(self, the_param_dic)
+        else:
+            logger.error(f'unknown buy strategy "{the_strategy_name}" for "{self.name}"')
+
+    def add_sell_strategy(self, the_strategy_name, the_param_dic):
+        from strategy.sell_on_closing import SellOnClosing
+        from strategy.sell_stop_loss import SellStopLoss
+        from strategy.sell_on_condition import SellOnCondition
+        if the_strategy_name == 'sell_on_closing':
+            self.sell_strategy_dic[the_strategy_name] = SellOnClosing(self, the_param_dic)
+        elif the_strategy_name == 'sell_stop_loss':
+            self.sell_strategy_dic[the_strategy_name] = SellStopLoss(self, the_param_dic)
+        elif the_strategy_name == 'sell_on_condition':
+            self.sell_strategy_dic[the_strategy_name] = SellOnCondition(self, the_param_dic)
+        else:
+            logger.error(f'unknown sell strategy "{the_strategy_name}" for "{self.name}"')
+
+    def on_buy_signal(self, the_strategy, the_order_quantity):
+        logger.info("buy_signal!! for %s. the_strategy: %s, the_order_quantity: %d", self.name, the_strategy.name,
+                    the_order_quantity)
+        pass
+
+    def on_sell_signal(self, the_strategy, the_order_quantity):
+        logger.info("sell_signal!! for %s. the_strategy: %s, the_order_quantity: %d", self.name, the_strategy.name,
+                    the_order_quantity)
+        pass
 
 
 class Condition:
-    index = -1  # 인덱스
-    name = 'temp'  # 조건명
-    signal_type = None
-    enabled = False
+    def __init__(self):
+        self.index = -1  # 인덱스
+        self.name = 'temp'  # 조건명
+        self.signal_type = None
+        self.enabled = False
 
 
 class Model:
     SAVE_FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../my_stock_list.json')
 
-    account = '1234'
-    account_list = ['1234', '4567']
-    condition_list = []
-    stock_dic = {}
-
     def __init__(self):
-        pass
+        self.account = '1234'
+        self.account_list = ['1234', '4567']
+        self.condition_list = []
+        self.stock_dic = {}
 
     def __str__(self):
         ret_str = '====== UserData =======\n'
@@ -74,6 +111,10 @@ class Model:
             stock = self.get_stock(loaded_stock['code'])
             stock.name = loaded_stock['name']
             stock.target_quantity = loaded_stock['target_quantity']
+            for k, v in loaded_stock['buy_strategy_dic'].items():
+                stock.add_buy_strategy(k, v)
+            for k, v in loaded_stock['sell_strategy_dic'].items():
+                stock.add_sell_strategy(k, v)
 
     def get_stock(self, the_code):
         if the_code not in self.stock_dic:
@@ -83,13 +124,27 @@ class Model:
 
 
 if __name__ == "__main__":
+    logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     stream_handler = logging.StreamHandler()
     logger.addHandler(stream_handler)
 
     model = Model()
-    # modelManager.get_stock('0001')
+    stock0001 = model.get_stock('0001')
+    stock0001.name = '테스트종목'
+    stock0002 = model.get_stock('0002')
+    stock0002.name = 'temp종목'
     logger.info(model)
-    # modelManager.save()
-    model.load()
+    stock0001.add_buy_strategy('buy_just_buy', {})
+    stock0001.add_buy_strategy('buy_on_opening', {})
+    logger.info(model)
+    stock0001.add_sell_strategy('sell_on_closing', {})
+    stock0001.add_sell_strategy('sell_stop_loss', {})
+    stock0001.add_sell_strategy('sell_on_condition', {})
+    stock0002.add_sell_strategy('sell_stop_loss', {'threshold': -0.05})
+    model.save()
+    # model.load()
+    # stock0001 = model.get_stock('0001')
+    # stock0001.add_buy_strategy('temp_strategy', {})
+    # stock0001.add_buy_strategy('buy_on_opening', {})
     logger.info(model)

@@ -46,6 +46,7 @@ class MainWindow(QMainWindow):
 
 
 if __name__ == "__main__":
+    logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     stream_handler = logging.StreamHandler()
     logger.addHandler(stream_handler)
