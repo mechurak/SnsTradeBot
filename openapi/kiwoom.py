@@ -34,12 +34,15 @@ class Kiwoom(QAxWidget):
     listener = None
     login_event_loop = None
     tr_event_loop = None
+    temp_event_loop = None
 
     def __init__(self, the_model):
         super().__init__()
         self.model = the_model
         self.setControl("KHOPENAPI.KHOpenAPICtrl.1")
         self.OnEventConnect.connect(self._event_connect)
+        self.OnReceiveTrCondition.connect(self._on_receive_tr_condition)
+        self.OnReceiveConditionVer.connect(self._on_receive_condition_ver)
 
     def set_listener(self, the_listener):
         self.listener = the_listener
@@ -66,6 +69,16 @@ class Kiwoom(QAxWidget):
         code_list = self.dynamicCall("GetCodeListByMarket(QString)", market)
         code_list = code_list.split(';')
         return code_list[:-1]
+
+    def get_condition_name_list(self):
+        condition_name_list_str = self.dynamicCall("GetConditionNameList()")
+        condition_name_list_str = condition_name_list_str[:-1]  # Remove last ';'
+        condition_name_list = condition_name_list_str.split(';')
+        ret_dic = {}
+        for name_with_index in condition_name_list:
+            temp_list = name_with_index.split('^')
+            ret_dic[int(temp_list[0])] = temp_list[1]
+        return ret_dic
 
     def get_master_code_name(self, code):
         code_name = self.dynamicCall("GetMasterCodeName(QString)", code)
@@ -143,6 +156,40 @@ class Kiwoom(QAxWidget):
         ret = self.dynamicCall("GetLoginInfo(QString)", tag)
         return ret
 
+    def get_condition_load_async(self):
+        """HTS 에 저장된 condition 불러옴
+
+        :return: 1(성공)
+        :callback: _on_receive_condition_ver()
+        """
+        ret = self.dynamicCall("GetConditionLoad()")
+        logger.debug("ret: %d", ret)
+        self.temp_event_loop = QEventLoop()
+        self.temp_event_loop.exec_()
+        return ret
+
+    def _on_receive_condition_ver(self, lRet, sMsg):
+        logger.debug("%d %s", lRet, sMsg)
+        self.temp_event_loop.exit()
+
+    def send_condition_aync(self, screen_num, condition_name, condition_index, query_type):
+        """ condition 만족하는 종목 조회 or 실시간 등록
+
+        :param query_type: 조회구분(0:일반조회, 1:실시간조회, 2:연속조회)
+        :callback: _on_receive_tr_condition()
+        """
+        ret = self.dynamicCall("SendCondition(QString, QString, int, int)", screen_num, condition_name, condition_index, query_type)
+        return ret
+
+    def _on_receive_tr_condition(self, scr_no, str_code_list, str_condition_name, index, has_next):
+        logger.debug(f'{scr_no} {str_code_list} {str_condition_name} {index} {has_next}')
+        code_list_str = str_code_list[:-1]  # 마지막 ";" 제거
+        code_list = code_list_str.split(';')
+        logger.debug("code_list: %s", code_list)
+        for code in code_list:
+            name = self.get_master_code_name([code])
+            logger.debug("code: %s, name: %s", code, name)
+
 
 if __name__ == "__main__":
     logger = logging.getLogger()
@@ -168,9 +215,13 @@ if __name__ == "__main__":
     kiwoom_api.set_listener(tempManager)
 
     kiwoom_api.comm_connect()
-    code_list = kiwoom_api.get_code_list_by_market('10')
-    for code in code_list:
-        logger.info(code)
-    logger.info(kiwoom_api.get_master_code_name("000660"))
+
+    kiwoom_api.get_condition_load_async()
+    condition_name_dic = kiwoom_api.get_condition_name_list()
+    logger.debug(condition_name_dic)
+
+    kiwoom_api.send_condition_aync('1111', condition_name_dic[1], 1, 0)
+
+
     tempWindow.show()
     sys.exit(app.exec_())
