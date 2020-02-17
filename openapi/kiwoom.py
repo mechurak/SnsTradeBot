@@ -59,6 +59,8 @@ class Kiwoom(QAxWidget):
             account_num = account_num[:-1]
             account_list = account_num.split(";")
             logger.info("account_list: %s", account_list)
+            self.model.account_list = account_list
+            self.model.account = account_list[0]
         else:
             logger.info("disconnected")
         self.login_event_loop.exit()
@@ -221,7 +223,6 @@ if __name__ == "__main__":
     logger.debug(condition_name_dic)
 
     kiwoom_api.send_condition_aync('1111', condition_name_dic[1], 1, 0)
-
 
     tempWindow.show()
     sys.exit(app.exec_())

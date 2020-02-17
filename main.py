@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QApplication
 from ui.main_window import MainWindow
 from ui.main_window import MyListener
 from openapi.kiwoom import Kiwoom
+from openapi.kiwoom import KiwoomListener
 from model.model import Model
 import slack.run
 import threading
@@ -14,7 +15,7 @@ import threading
 # Setup root logger
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s [%(levelname)s|%(filename)s:%(lineno)s (%(funcName)s)] %(message)s')
+formatter = logging.Formatter('%(asctime)s [%(levelname)s| %(filename)s :%(lineno)s (%(funcName)s)] %(message)s')
 LOG_DIR = "log"
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
@@ -29,17 +30,34 @@ logger.addHandler(file_handler)
 logger.addHandler(stream_handler)
 
 
-class Manager(MyListener):
-    def __init__(self, the_model):
+class Manager(MyListener, KiwoomListener):
+    def __init__(self, the_model, the_main_window):
         self.model = the_model
+        self.main_window = the_main_window
 
+    # MyListener
     def account_changed(self, the_account):
         logger.info("account_changed. the_account: %s", the_account)
-        pass
 
-    def balance_btn_clicked(self):
-        logger.info("balance_btn_clicked")
-        pass
+    def btn_balance_clicked(self):
+        logger.info("btn_balance_clicked")
+
+    def btn_refresh_condition_list_clicked(self):
+        logger.info("btn_refresh_condition_list_clicked")
+
+    def btn_query_condition_clicked(self, condition):
+        logger.info(f'btn_query_condition_clicked. {condition.index} {condition.name}')
+
+    # KiwoomListener
+    def on_connect(self, err_code):
+        logger.info("on_connect!!! in ui. err_code: %d", err_code)
+        self.main_window.update_account()
+
+    def on_receive_tr_data(self):
+        logger.info("on_receive_tr_data")
+
+    def on_receive_chejan_data(self):
+        logger.info("on_receive_chejan_data")
 
 
 if __name__ == "__main__":
@@ -52,11 +70,12 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     model = Model()
-    manager = Manager(model)
     main_window = MainWindow(model)
+    manager = Manager(model, main_window)
     main_window.set_listener(manager)
 
     kiwoom_api = Kiwoom(model)
+    kiwoom_api.set_listener(manager)
     kiwoom_api.comm_connect()
 
     main_window.show()

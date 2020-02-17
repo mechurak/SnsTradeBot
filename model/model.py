@@ -70,9 +70,9 @@ class Stock:
 
 
 class Condition:
-    def __init__(self):
-        self.index = -1  # 인덱스
-        self.name = 'temp'  # 조건명
+    def __init__(self, index, name):
+        self.index = index  # 인덱스
+        self.name = name  # 조건명
         self.signal_type = None
         self.enabled = False
 
@@ -83,7 +83,7 @@ class Model:
     def __init__(self):
         self.account = '1234'
         self.account_list = ['1234', '4567']
-        self.condition_list = []
+        self.condition_list = [Condition(1, 'temp1'), Condition(2, 'temp2')]
         self.stock_dic = {}
 
     def __str__(self):
