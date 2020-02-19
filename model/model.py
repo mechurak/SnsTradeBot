@@ -122,6 +122,11 @@ class Model:
             logger.debug("new code '%s'. create new stock", the_code)
         return self.stock_dic[the_code]
 
+    def set_condition_list(self, the_condition_dic):
+        self.condition_list = []
+        for index, name in the_condition_dic.items():
+            self.condition_list.append(Condition(index, name))
+
 
 if __name__ == "__main__":
     logger = logging.getLogger()

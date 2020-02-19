@@ -31,9 +31,14 @@ logger.addHandler(stream_handler)
 
 
 class Manager(MyListener, KiwoomListener):
-    def __init__(self, the_model, the_main_window):
+    model: Model
+    main_window: MainWindow
+    kiwoom_api: Kiwoom
+
+    def __init__(self, the_model, the_main_window, the_kiwoom_api):
         self.model = the_model
         self.main_window = the_main_window
+        self.kiwoom_api = the_kiwoom_api
 
     # MyListener
     def account_changed(self, the_account):
@@ -44,6 +49,12 @@ class Manager(MyListener, KiwoomListener):
 
     def btn_refresh_condition_list_clicked(self):
         logger.info("btn_refresh_condition_list_clicked")
+        ret = self.kiwoom_api.get_condition_load_async()
+        assert ret == 1, "get_condition_load_async() failed"
+        condition_name_dic = self.kiwoom_api.get_condition_name_list()
+        logger.debug(condition_name_dic)
+        self.model.set_condition_list(condition_name_dic)
+        self.main_window.update_condtion_table()
 
     def btn_query_condition_clicked(self, condition):
         logger.info(f'btn_query_condition_clicked. {condition.index} {condition.name}')
@@ -71,10 +82,11 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     model = Model()
     main_window = MainWindow(model)
-    manager = Manager(model, main_window)
-    main_window.set_listener(manager)
-
     kiwoom_api = Kiwoom(model)
+
+    manager = Manager(model, main_window, kiwoom_api)
+
+    main_window.set_listener(manager)
     kiwoom_api.set_listener(manager)
     kiwoom_api.comm_connect()
 

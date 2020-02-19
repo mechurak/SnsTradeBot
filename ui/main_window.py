@@ -49,7 +49,7 @@ class MainWindow(QMainWindow):
         abspath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "MainWindow.ui")
         self.ui = uic.loadUi(abspath, self)
         self.update_account()
-        self.set_condition_list(self.model.condition_list)
+        self.update_condtion_table()
 
     def set_listener(self, the_listener):
         self.listener = the_listener
@@ -62,12 +62,12 @@ class MainWindow(QMainWindow):
         self.combo_account.addItems(self.model.account_list)
         self.combo_account.setCurrentIndex(self.ui.combo_account.findText(self.model.account))
 
-    def set_condition_list(self, the_condition_list):
+    def update_condtion_table(self):
         header = ["인덱스", "조건명", "신호종류", "적용유무", "요청버튼"]
         self.table_condition.setColumnCount(len(header))
         self.table_condition.setHorizontalHeaderLabels(header)
-        self.table_condition.setRowCount(len(the_condition_list))
-        for i, condition in enumerate(the_condition_list):
+        self.table_condition.setRowCount(len(self.model.condition_list))
+        for i, condition in enumerate(self.model.condition_list):
             def btn_callback(c):
                 return lambda: self.listener.btn_query_condition_clicked(c)
             self.table_condition.setItem(i, 0, QTableWidgetItem(str(condition.index)))
