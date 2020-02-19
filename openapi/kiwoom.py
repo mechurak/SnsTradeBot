@@ -4,8 +4,9 @@ from abc import abstractmethod
 from PyQt5.QtWidgets import *
 from PyQt5.QAxContainer import *
 from PyQt5.QtCore import *
-from model.model import Model
-
+from model.model import Model, DataType
+from model.model import Stock
+from model.model import ModelListener
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +17,7 @@ class KiwoomListener:
     """
     Notify kiwoom events to UI
     """
+
     @abstractmethod
     def on_connect(self, err_code):
         pass
@@ -30,11 +32,13 @@ class KiwoomListener:
 
 
 class Kiwoom(QAxWidget):
-    model = None
-    listener = None
+    model: Model
+    listener: KiwoomListener
     login_event_loop = None
     tr_event_loop = None
     temp_event_loop = None
+
+    RQ_MULTI_CODE_QUERY = 'MULTI_CODE_QUERY'
 
     def __init__(self, the_model):
         super().__init__()
@@ -43,6 +47,8 @@ class Kiwoom(QAxWidget):
         self.OnEventConnect.connect(self._event_connect)
         self.OnReceiveTrCondition.connect(self._on_receive_tr_condition)
         self.OnReceiveConditionVer.connect(self._on_receive_condition_ver)
+        self.OnReceiveTrData.connect(self._on_receive_tr_data)
+        self.OnReceiveRealData.connect(self._on_receive_real_data)
 
     def set_listener(self, the_listener):
         self.listener = the_listener
@@ -98,46 +104,44 @@ class Kiwoom(QAxWidget):
         self.tr_event_loop = QEventLoop()
         self.tr_event_loop.exec_()
 
-    def _comm_get_data(self, code, real_type, field_name, index, item_name):
-        ret = self.dynamicCall("CommGetData(QString, QString, QString, int, QString)", code,
-                               real_type, field_name, index, item_name)
+    def _get_comm_data(self, tr_code: str, record_name: str, index: int, item_name: str) -> str:
+        ret = self.dynamicCall("GetCommData(QString, QString, int, QString)",
+                               [tr_code, record_name, index, item_name])
         return ret.strip()
 
-    def _get_repeat_cnt(self, trcode, rqname):
-        ret = self.dynamicCall("GetRepeatCnt(QString, QString)", trcode, rqname)
+    def _get_repeat_cnt(self, tr_code: str, rq_name: str):
+        ret = self.dynamicCall("GetRepeatCnt(QString, QString)", tr_code, rq_name)
         return ret
 
-    def _receive_tr_data(self, screen_no, rqname, trcode, record_name, next, unused1, unused2, unused3, unused4):
-        if next == '2':
+    def _on_receive_tr_data(self, screen_no: str, rq_name: str, tr_code: str, record_name: str, pre_next: str, unused1,
+                            unused2, unused3, unused4):
+        logger.debug(
+            f"screen_no:{screen_no} rq_name:{rq_name} tr_code:{tr_code} record_name:{record_name} pre_next:{pre_next} unused1:{unused1} unused2:{unused2} unused3:{unused3} unused4:{unused4}")
+        if pre_next == '2':
             self.remained_data = True
         else:
             self.remained_data = False
 
-        if rqname == "opt10081_req":
-            self._opt10081(rqname, trcode)
+        if rq_name == Kiwoom.RQ_MULTI_CODE_QUERY:
+            count = self._get_repeat_cnt(tr_code, rq_name)
+            for i in range(count):
+                code = self._get_comm_data(tr_code, record_name, i, '종목코드')
+                name = self._get_comm_data(tr_code, record_name, i, '종목명')
+                price_str = self._get_comm_data(tr_code, record_name, i, '현재가')
+                price = int(price_str)
+                price = price if price >= 0 else price * (-1)
+                stock = self.model.get_stock(code)
+                stock.name = name
+                stock.cur_price = price
+                logger.info(f'code:{code} name:{name} price:{price}')
 
         try:
             self.tr_event_loop.exit()
         except AttributeError:
             pass
 
-    def _opt10081(self, rqname, trcode):
-        data_cnt = self._get_repeat_cnt(trcode, rqname)
-
-        for i in range(data_cnt):
-            date = self._comm_get_data(trcode, "", rqname, i, "일자")
-            open = self._comm_get_data(trcode, "", rqname, i, "시가")
-            high = self._comm_get_data(trcode, "", rqname, i, "고가")
-            low = self._comm_get_data(trcode, "", rqname, i, "저가")
-            close = self._comm_get_data(trcode, "", rqname, i, "현재가")
-            volume = self._comm_get_data(trcode, "", rqname, i, "거래량")
-
-            self.ohlcv['date'].append(date)
-            self.ohlcv['open'].append(int(open))
-            self.ohlcv['high'].append(int(high))
-            self.ohlcv['low'].append(int(low))
-            self.ohlcv['close'].append(int(close))
-            self.ohlcv['volume'].append(int(volume))
+    def _on_receive_real_data(self, code: str, real_type: str, real_data: str):
+        logger.debug(f"code:{code} real_type:{real_type} real_data:{real_data}")
 
     def send_order(self, rqname, screen_no, acc_no, order_type, code, quantity, price, hoga, order_no):
         self.dynamicCall("SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
@@ -174,13 +178,14 @@ class Kiwoom(QAxWidget):
         logger.debug("%d %s", lRet, sMsg)
         self.temp_event_loop.exit()
 
-    def send_condition_aync(self, screen_num, condition_name, condition_index, query_type):
+    def send_condition_async(self, screen_num, condition_name, condition_index, query_type):
         """ condition 만족하는 종목 조회 or 실시간 등록
 
         :param query_type: 조회구분(0:일반조회, 1:실시간조회, 2:연속조회)
         :callback: _on_receive_tr_condition()
         """
-        ret = self.dynamicCall("SendCondition(QString, QString, int, int)", screen_num, condition_name, condition_index, query_type)
+        ret = self.dynamicCall("SendCondition(QString, QString, int, int)", screen_num, condition_name, condition_index,
+                               query_type)
         return ret
 
     def _on_receive_tr_condition(self, scr_no, str_code_list, str_condition_name, index, has_next):
@@ -188,9 +193,33 @@ class Kiwoom(QAxWidget):
         code_list_str = str_code_list[:-1]  # 마지막 ";" 제거
         code_list = code_list_str.split(';')
         logger.debug("code_list: %s", code_list)
+        temp_stock_list = []
         for code in code_list:
             name = self.get_master_code_name([code])
+            temp_stock_list.append(Stock(code, name))
             logger.debug("code: %s, name: %s", code, name)
+        self.model.set_temp_stock_list(temp_stock_list)
+
+    def comm_kw_rq_data(self, the_code_list: list):
+        logger.debug(f'comm_kw_rq_data() {the_code_list}')
+        code_list_str = ";".join(the_code_list)
+        count = len(code_list_str)
+        is_next = 0
+        type_flag = 0
+        rq_name = Kiwoom.RQ_MULTI_CODE_QUERY
+        screen_no = '2222'
+        """복수종목조회 Tran 을 서버로 송신한다
+        @param  sArrCode 종목리스트
+        @param  bNext 연속조회요청
+        @param  nCodeCount 종목개수
+        @param  nTypeFlag 조회구분
+        @param  sRQName 사용자구분 명
+        @param  sScreenNo 화면번호
+        """
+        ret = self.dynamicCall("CommKwRqData(QString, int, int, int, QString, QString)",
+                               [code_list_str, is_next, count, type_flag, rq_name, screen_no])
+        logger.info(f'ret: {ret}')
+        return ret
 
 
 if __name__ == "__main__":
@@ -198,6 +227,7 @@ if __name__ == "__main__":
     logger.setLevel(logging.DEBUG)
     stream_handler = logging.StreamHandler()
     logger.addHandler(stream_handler)
+
 
     class TempKiwoomListener(KiwoomListener):
         def on_connect(self, err_code):
@@ -209,10 +239,18 @@ if __name__ == "__main__":
         def on_receive_chejan_data(self):
             logger.info("on_receive_chejan_data")
 
+
+    class TempModelListener(ModelListener):
+        def on_data_update(self, data_type: DataType):
+            logger.info(f"on_data_update. {data_type}")
+
+
     app = QApplication(sys.argv)
     tempWindow = QMainWindow()
     tempManager = TempKiwoomListener()
+    tempModelListener = TempModelListener()
     model = Model()
+    model.set_listener(tempModelListener)
     kiwoom_api = Kiwoom(model)
     kiwoom_api.set_listener(tempManager)
 
@@ -222,7 +260,10 @@ if __name__ == "__main__":
     condition_name_dic = kiwoom_api.get_condition_name_list()
     logger.debug(condition_name_dic)
 
-    kiwoom_api.send_condition_aync('1111', condition_name_dic[1], 1, 0)
+    kiwoom_api.send_condition_async('1111', condition_name_dic[1], 1, 0)
+
+    input_code_list = ['004540', '005360', '053110']
+    kiwoom_api.comm_kw_rq_data(input_code_list)
 
     tempWindow.show()
     sys.exit(app.exec_())

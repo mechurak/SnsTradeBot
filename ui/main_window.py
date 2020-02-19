@@ -1,8 +1,7 @@
 import logging
 import os
 import sys
-from model.model import Model
-from model.model import Condition
+from model.model import Model, ModelListener, DataType
 from abc import abstractmethod
 
 from PyQt5 import uic
@@ -15,6 +14,7 @@ class MyListener:
     """
     Listen user action
     """
+
     @abstractmethod
     def account_changed(self, the_account):
         pass
@@ -32,7 +32,7 @@ class MyListener:
         pass
 
 
-class MainWindow(QMainWindow):
+class MainWindow(QMainWindow, ModelListener):
     model = None
     ui = None
     listener = None
@@ -50,6 +50,7 @@ class MainWindow(QMainWindow):
         self.ui = uic.loadUi(abspath, self)
         self.update_account()
         self.update_condtion_table()
+        self.model.set_listener(self)
 
     def set_listener(self, the_listener):
         self.listener = the_listener
@@ -70,6 +71,7 @@ class MainWindow(QMainWindow):
         for i, condition in enumerate(self.model.condition_list):
             def btn_callback(c):
                 return lambda: self.listener.btn_query_condition_clicked(c)
+
             self.table_condition.setItem(i, 0, QTableWidgetItem(str(condition.index)))
             self.table_condition.setItem(i, 1, QTableWidgetItem(condition.name))
             self.table_condition.setItem(i, 2, QTableWidgetItem(condition.signal_type))
@@ -78,12 +80,26 @@ class MainWindow(QMainWindow):
             button.clicked.connect(btn_callback(condition))
             self.table_condition.setCellWidget(i, 4, button)
 
+    def on_data_update(self, data_type: DataType):
+        logger.info(f"data_type: {data_type}")
+        if data_type == DataType.TEMP_STOCK_LIST:
+            header = ["종목코드", "종목명"]
+            self.table_temp_stock.setColumnCount(len(header))
+            self.table_temp_stock.setHorizontalHeaderLabels(header)
+            self.table_temp_stock.setRowCount(len(self.model.temp_stock_list))
+            for i, stock in enumerate(self.model.temp_stock_list):
+                self.table_temp_stock.setItem(i, 0, QTableWidgetItem(stock.code))
+                self.table_temp_stock.setItem(i, 1, QTableWidgetItem(stock.name))
+        else:
+            logger.error(f"unexpected data_type: {data_type}")
+
 
 if __name__ == "__main__":
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     stream_handler = logging.StreamHandler()
     logger.addHandler(stream_handler)
+
 
     class TempListener(MyListener):
         def account_changed(self, the_account):
@@ -97,6 +113,7 @@ if __name__ == "__main__":
 
         def btn_query_condition_clicked(self, condition):
             logger.info(f'btn_query_condition_clicked. {condition.index} {condition.name}')
+
 
     app = QApplication(sys.argv)
     model = Model()

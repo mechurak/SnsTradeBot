@@ -1,15 +1,17 @@
+import enum
 import logging
 import os
 import json
+from abc import abstractmethod
 
 logger = logging.getLogger(__name__)
 
 
 class Stock:
-    def __init__(self, the_code):
+    def __init__(self, the_code, the_name='UNDEFINED', the_cur_price=0):
         self.code = the_code  # 종목코드
-        self.name = 'UNDEFINED'  # 종목명
-        self.cur_price = 0  # 현재가
+        self.name = the_name  # 종목명
+        self.cur_price = the_cur_price  # 현재가
         self.buy_price = 0  # 매입가
         self.quantity = 0  # 보유수량
         self.earning_rate = 0.0  # 수익률
@@ -18,8 +20,8 @@ class Stock:
         self.target_quantity = 0  # 목표보유수량
 
     def __str__(self):
-        return f'({self.code} {self.name} {self.cur_price} {self.buy_price} {self.quantity}' \
-               f' {list(self.buy_strategy_dic.keys())} {list(self.sell_strategy_dic.keys())} {self.target_quantity})'
+        return f'({self.code} {self.name} {self.cur_price} {self.buy_price} {self.quantity} ' \
+               f'{list(self.buy_strategy_dic.keys())} {list(self.sell_strategy_dic.keys())} {self.target_quantity})'
 
     def get_dic(self):
         ret = {
@@ -77,6 +79,16 @@ class Condition:
         self.enabled = False
 
 
+class DataType(enum.Enum):
+    TEMP_STOCK_LIST = 5
+
+
+class ModelListener:
+    @abstractmethod
+    def on_data_update(self, data_type: DataType):
+        pass
+
+
 class Model:
     SAVE_FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../my_stock_list.json')
 
@@ -85,6 +97,8 @@ class Model:
         self.account_list = ['1234', '4567']
         self.condition_list = [Condition(1, 'temp1'), Condition(2, 'temp2')]
         self.stock_dic = {}
+        self.temp_stock_list = []
+        self.listener = None
 
     def __str__(self):
         ret_str = '====== UserData =======\n'
@@ -93,6 +107,9 @@ class Model:
         for k, v in self.stock_dic.items():
             ret_str += f'  {k}: {v}\n'
         return ret_str
+
+    def set_listener(self, the_listener):
+        self.listener = the_listener
 
     def save(self):
         f = open(Model.SAVE_FILE_PATH, "w", encoding='utf8')
@@ -126,6 +143,11 @@ class Model:
         self.condition_list = []
         for index, name in the_condition_dic.items():
             self.condition_list.append(Condition(index, name))
+
+    def set_temp_stock_list(self, temp_stock_list: list):
+        self.temp_stock_list = temp_stock_list
+        if self.listener is not None:
+            self.listener.on_data_update(DataType.TEMP_STOCK_LIST)
 
 
 if __name__ == "__main__":
