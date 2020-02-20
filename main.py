@@ -47,6 +47,15 @@ class Manager(MyListener, KiwoomListener):
     def btn_balance_clicked(self):
         logger.info("btn_balance_clicked")
 
+    def btn_interest_balance_clicked(self):
+        logger.info('btn_interest_balance_clicked')
+
+    def btn_real_clicked(self):
+        logger.info('btn_real_clicked')
+
+    def btn_code_add_clicked(self):
+        logger.info('btn_code_add_clicked')
+
     def btn_refresh_condition_list_clicked(self):
         logger.info("btn_refresh_condition_list_clicked")
         ret = self.kiwoom_api.get_condition_load_async()

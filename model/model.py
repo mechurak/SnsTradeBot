@@ -8,16 +8,16 @@ logger = logging.getLogger(__name__)
 
 
 class Stock:
-    def __init__(self, the_code, the_name='UNDEFINED', the_cur_price=0):
+    def __init__(self, the_code: str, the_name: str = 'UNDEFINED', the_cur_price: int = 0):
         self.code = the_code  # 종목코드
         self.name = the_name  # 종목명
         self.cur_price = the_cur_price  # 현재가
-        self.buy_price = 0  # 매입가
-        self.quantity = 0  # 보유수량
-        self.earning_rate = 0.0  # 수익률
+        self.buy_price: int = 0  # 매입가
+        self.quantity: int = 0  # 보유수량
+        self.earning_rate: float = 0.0  # 수익률
         self.buy_strategy_dic = {}
         self.sell_strategy_dic = {}
-        self.target_quantity = 0  # 목표보유수량
+        self.target_quantity: int = 0  # 목표보유수량
 
     def __str__(self):
         return f'({self.code} {self.name} {self.cur_price} {self.buy_price} {self.quantity} ' \
@@ -115,6 +115,7 @@ class Model:
         self.listener = the_listener
 
     def save(self):
+        logger.info('save')
         f = open(Model.SAVE_FILE_PATH, "w", encoding='utf8')
         stock_list = []
         for k, v in self.stock_dic.items():
@@ -124,6 +125,7 @@ class Model:
         f.close()
 
     def load(self):
+        logger.info('load')
         f = open(Model.SAVE_FILE_PATH, "r", encoding='utf8')
         stock_list = json.load(f)
         logger.info(stock_list)
@@ -135,6 +137,8 @@ class Model:
                 stock.add_buy_strategy(k, v)
             for k, v in loaded_stock['sell_strategy_dic'].items():
                 stock.add_sell_strategy(k, v)
+        if self.listener:
+            self.listener.on_data_update(DataType.TABLE_BALANCE)
 
     def get_stock(self, the_code):
         if the_code not in self.stock_dic:
@@ -158,6 +162,15 @@ class Model:
     def set_temp_stock_list(self, temp_stock_list: list):
         self.temp_stock_list = temp_stock_list
         if self.listener:
+            self.listener.on_data_update(DataType.TABLE_TEMP_STOCK)
+
+    def add_all_temp_stock(self):
+        for stock in self.temp_stock_list:
+            if stock.code not in self.stock_dic:
+                self.stock_dic[stock.code] = stock
+        self.temp_stock_list = []
+        if self.listener:
+            self.listener.on_data_update(DataType.TABLE_BALANCE)
             self.listener.on_data_update(DataType.TABLE_TEMP_STOCK)
 
 

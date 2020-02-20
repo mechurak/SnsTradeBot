@@ -6,66 +6,21 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>763</width>
-    <height>810</height>
+    <width>855</width>
+    <height>808</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string notr="true">SnsTradeBot</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QGroupBox" name="groupBox">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>10</y>
-      <width>741</width>
-      <height>61</height>
-     </rect>
-    </property>
-    <property name="title">
-     <string>계좌정보</string>
-    </property>
-    <widget class="QWidget" name="layoutWidget">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>20</y>
-       <width>391</width>
-       <height>30</height>
-      </rect>
-     </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_2">
-      <item>
-       <widget class="QLabel" name="label_2">
-        <property name="text">
-         <string>계좌번호</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QComboBox" name="combo_account"/>
-      </item>
-      <item>
-       <widget class="QPushButton" name="btn_balance">
-        <property name="text">
-         <string>잔고조회</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </widget>
    <widget class="QGroupBox" name="groupBox_2">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>310</y>
+      <y>400</y>
       <width>741</width>
-      <height>451</height>
+      <height>361</height>
      </rect>
     </property>
     <property name="title">
@@ -90,7 +45,7 @@
        <x>10</x>
        <y>50</y>
        <width>541</width>
-       <height>171</height>
+       <height>141</height>
       </rect>
      </property>
      <property name="rowCount">
@@ -123,9 +78,9 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>270</y>
+       <y>230</y>
        <width>241</width>
-       <height>171</height>
+       <height>121</height>
       </rect>
      </property>
      <property name="rowCount">
@@ -149,7 +104,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>240</y>
+       <y>200</y>
        <width>188</width>
        <height>25</height>
       </rect>
@@ -163,7 +118,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButton">
+       <widget class="QPushButton" name="btn_temp_code_add">
         <property name="text">
          <string>대상 종목에 추가</string>
         </property>
@@ -178,19 +133,19 @@
       <x>10</x>
       <y>80</y>
       <width>741</width>
-      <height>221</height>
+      <height>311</height>
      </rect>
     </property>
     <property name="title">
-     <string>관심종목</string>
+     <string>보유/관심종목</string>
     </property>
     <widget class="QTableWidget" name="table_balance">
      <property name="geometry">
       <rect>
        <x>10</x>
        <y>20</y>
-       <width>541</width>
-       <height>192</height>
+       <width>651</width>
+       <height>241</height>
       </rect>
      </property>
      <property name="rowCount">
@@ -223,6 +178,143 @@
      <column/>
      <column/>
     </widget>
+    <widget class="QWidget" name="">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>270</y>
+       <width>181</width>
+       <height>25</height>
+      </rect>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="2,1">
+      <property name="spacing">
+       <number>6</number>
+      </property>
+      <item>
+       <widget class="QLineEdit" name="edit_code">
+        <property name="placeholderText">
+         <string>종목코드</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btn_code_add">
+        <property name="text">
+         <string>추가</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QWidget" name="">
+     <property name="geometry">
+      <rect>
+       <x>297</x>
+       <y>270</y>
+       <width>361</width>
+       <height>25</height>
+      </rect>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_5">
+      <item>
+       <widget class="QPushButton" name="btn_balance">
+        <property name="text">
+         <string>보유 종목 조회</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btn_interest_balance">
+        <property name="text">
+         <string>미보유 종목 조회</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btn_real">
+        <property name="text">
+         <string>실시간 등록</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </widget>
+   <widget class="QGroupBox" name="groupBox_4">
+    <property name="geometry">
+     <rect>
+      <x>430</x>
+      <y>10</y>
+      <width>321</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>System</string>
+    </property>
+    <widget class="QWidget" name="">
+     <property name="geometry">
+      <rect>
+       <x>40</x>
+       <y>20</y>
+       <width>239</width>
+       <height>25</height>
+      </rect>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <item>
+       <widget class="QPushButton" name="btn_load">
+        <property name="text">
+         <string>Load</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btn_save">
+        <property name="text">
+         <string>Save</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btn_print">
+        <property name="text">
+         <string>Print</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>20</y>
+      <width>181</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,2">
+     <item>
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>계좌번호</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="combo_account">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -231,7 +323,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>763</width>
+     <width>855</width>
      <height>21</height>
     </rect>
    </property>
