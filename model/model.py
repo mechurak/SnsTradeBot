@@ -80,7 +80,10 @@ class Condition:
 
 
 class DataType(enum.Enum):
-    TEMP_STOCK_LIST = 5
+    COMBO_ACCOUNT = 0
+    TABLE_BALANCE = 1
+    TABLE_CONDITION = 4
+    TABLE_TEMP_STOCK = 5
 
 
 class ModelListener:
@@ -108,7 +111,7 @@ class Model:
             ret_str += f'  {k}: {v}\n'
         return ret_str
 
-    def set_listener(self, the_listener):
+    def set_listener(self, the_listener: ModelListener):
         self.listener = the_listener
 
     def save(self):
@@ -139,15 +142,23 @@ class Model:
             logger.debug("new code '%s'. create new stock", the_code)
         return self.stock_dic[the_code]
 
+    def set_account_list(self, the_account_list):
+        self.account_list = the_account_list
+        self.account = the_account_list[0]
+        if self.listener:
+            self.listener.on_data_update(DataType.COMBO_ACCOUNT)
+
     def set_condition_list(self, the_condition_dic):
         self.condition_list = []
         for index, name in the_condition_dic.items():
             self.condition_list.append(Condition(index, name))
+        if self.listener:
+            self.listener.on_data_update(DataType.TABLE_CONDITION)
 
     def set_temp_stock_list(self, temp_stock_list: list):
         self.temp_stock_list = temp_stock_list
-        if self.listener is not None:
-            self.listener.on_data_update(DataType.TEMP_STOCK_LIST)
+        if self.listener:
+            self.listener.on_data_update(DataType.TABLE_TEMP_STOCK)
 
 
 if __name__ == "__main__":

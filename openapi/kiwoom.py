@@ -19,10 +19,6 @@ class KiwoomListener:
     """
 
     @abstractmethod
-    def on_connect(self, err_code):
-        pass
-
-    @abstractmethod
     def on_receive_tr_data(self):
         pass
 
@@ -65,13 +61,10 @@ class Kiwoom(QAxWidget):
             account_num = account_num[:-1]
             account_list = account_num.split(";")
             logger.info("account_list: %s", account_list)
-            self.model.account_list = account_list
-            self.model.account = account_list[0]
+            self.model.set_account_list(account_list)
         else:
             logger.info("disconnected")
         self.login_event_loop.exit()
-        if self.listener:
-            self.listener.on_connect(err_code)
 
     def get_code_list_by_market(self, market):
         code_list = self.dynamicCall("GetCodeListByMarket(QString)", market)

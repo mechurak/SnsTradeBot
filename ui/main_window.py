@@ -48,8 +48,6 @@ class MainWindow(QMainWindow, ModelListener):
         self.model = the_model
         abspath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "MainWindow.ui")
         self.ui = uic.loadUi(abspath, self)
-        self.update_account()
-        self.update_condtion_table()
         self.model.set_listener(self)
 
     def set_listener(self, the_listener):
@@ -58,31 +56,29 @@ class MainWindow(QMainWindow, ModelListener):
         self.btn_balance.clicked.connect(self.listener.btn_balance_clicked)
         self.btn_refresh_condition.clicked.connect(self.listener.btn_refresh_condition_list_clicked)
 
-    def update_account(self):
-        self.combo_account.clear()
-        self.combo_account.addItems(self.model.account_list)
-        self.combo_account.setCurrentIndex(self.ui.combo_account.findText(self.model.account))
-
-    def update_condtion_table(self):
-        header = ["인덱스", "조건명", "신호종류", "적용유무", "요청버튼"]
-        self.table_condition.setColumnCount(len(header))
-        self.table_condition.setHorizontalHeaderLabels(header)
-        self.table_condition.setRowCount(len(self.model.condition_list))
-        for i, condition in enumerate(self.model.condition_list):
-            def btn_callback(c):
-                return lambda: self.listener.btn_query_condition_clicked(c)
-
-            self.table_condition.setItem(i, 0, QTableWidgetItem(str(condition.index)))
-            self.table_condition.setItem(i, 1, QTableWidgetItem(condition.name))
-            self.table_condition.setItem(i, 2, QTableWidgetItem(condition.signal_type))
-            self.table_condition.setItem(i, 3, QTableWidgetItem(condition.enabled))
-            button = QPushButton('조회 및 요청')
-            button.clicked.connect(btn_callback(condition))
-            self.table_condition.setCellWidget(i, 4, button)
-
     def on_data_update(self, data_type: DataType):
         logger.info(f"data_type: {data_type}")
-        if data_type == DataType.TEMP_STOCK_LIST:
+        if data_type == DataType.COMBO_ACCOUNT:
+            self.combo_account.clear()
+            self.combo_account.addItems(self.model.account_list)
+            self.combo_account.setCurrentIndex(self.ui.combo_account.findText(self.model.account))
+        elif data_type == DataType.TABLE_CONDITION:
+            header = ["인덱스", "조건명", "신호종류", "적용유무", "요청버튼"]
+            self.table_condition.setColumnCount(len(header))
+            self.table_condition.setHorizontalHeaderLabels(header)
+            self.table_condition.setRowCount(len(self.model.condition_list))
+            for i, condition in enumerate(self.model.condition_list):
+                def btn_callback(c):
+                    return lambda: self.listener.btn_query_condition_clicked(c)
+
+                self.table_condition.setItem(i, 0, QTableWidgetItem(str(condition.index)))
+                self.table_condition.setItem(i, 1, QTableWidgetItem(condition.name))
+                self.table_condition.setItem(i, 2, QTableWidgetItem(condition.signal_type))
+                self.table_condition.setItem(i, 3, QTableWidgetItem(condition.enabled))
+                button = QPushButton('조회 및 요청')
+                button.clicked.connect(btn_callback(condition))
+                self.table_condition.setCellWidget(i, 4, button)
+        elif data_type == DataType.TABLE_TEMP_STOCK:
             header = ["종목코드", "종목명"]
             self.table_temp_stock.setColumnCount(len(header))
             self.table_temp_stock.setHorizontalHeaderLabels(header)
@@ -120,6 +116,6 @@ if __name__ == "__main__":
     mainWindow = MainWindow(model)
     listener = TempListener()
     mainWindow.set_listener(listener)
-
+    model.set_account_list(['123', '678'])
     mainWindow.show()
     sys.exit(app.exec_())

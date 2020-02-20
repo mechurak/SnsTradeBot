@@ -15,7 +15,7 @@ import threading
 # Setup root logger
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s [%(levelname)s| %(filename)s :%(lineno)s (%(funcName)s)] %(message)s')
+formatter = logging.Formatter('%(asctime)s [%(levelname)s|%(filename)s:%(lineno)s(%(funcName)s)] %(message)s')
 LOG_DIR = "log"
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
@@ -54,17 +54,12 @@ class Manager(MyListener, KiwoomListener):
         condition_name_dic = self.kiwoom_api.get_condition_name_list()
         logger.debug(condition_name_dic)
         self.model.set_condition_list(condition_name_dic)
-        self.main_window.update_condtion_table()
 
     def btn_query_condition_clicked(self, condition):
         logger.info(f'btn_query_condition_clicked. {condition.index} {condition.name}')
         ret = self.kiwoom_api.send_condition_async('1111', condition.name, condition.index, 0)
 
     # KiwoomListener
-    def on_connect(self, err_code):
-        logger.info("on_connect!!! in ui. err_code: %d", err_code)
-        self.main_window.update_account()
-
     def on_receive_tr_data(self):
         logger.info("on_receive_tr_data")
 
