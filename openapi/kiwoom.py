@@ -1,6 +1,10 @@
+import os
 import sys
 import logging
+import time
 from abc import abstractmethod
+from datetime import datetime
+
 from PyQt5.QtWidgets import *
 from PyQt5.QAxContainer import *
 from PyQt5.QtCore import *
@@ -214,13 +218,30 @@ class Kiwoom(QAxWidget):
         logger.info(f'ret: {ret}')
         return ret
 
+    def set_real_reg(self, the_code_list: list):
+        logger.debug(f'set_real_reg() {the_code_list}')
+        code_list_str = ';'.join(the_code_list)
+        fid = "9001;10;13"  # 종목코드,업종코드;현재가;누적거래량
+        ret = self.dynamicCall("SetRealReg(QString, QString, QString, QString)",
+                               ['3333', code_list_str, fid, "1"])  # "1" 종목 추가, "0" 기존 종목은 제외
+        logger.info(f'call set_real_reg(). ret: {ret}')
+        return ret
+
 
 if __name__ == "__main__":
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s [%(levelname)s|%(filename)s:%(lineno)s(%(funcName)s)] %(message)s')
+    LOG_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../log")
+    if not os.path.exists(LOG_DIR):
+        os.makedirs(LOG_DIR)
+    file_name = LOG_DIR + "/" + datetime.now().strftime("%Y%m%d-%H%M%S") + ".log"
+    file_handler = logging.FileHandler(file_name, "a", "utf-8")
     stream_handler = logging.StreamHandler()
+    file_handler.setFormatter(formatter)
+    stream_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
     logger.addHandler(stream_handler)
-
 
     class TempKiwoomListener(KiwoomListener):
         def on_connect(self, err_code):
@@ -257,6 +278,10 @@ if __name__ == "__main__":
 
     input_code_list = ['004540', '005360', '053110']
     kiwoom_api.comm_kw_rq_data(input_code_list)
+
+    time.sleep(1)
+
+    kiwoom_api.set_real_reg(input_code_list)
 
     tempWindow.show()
     sys.exit(app.exec_())
