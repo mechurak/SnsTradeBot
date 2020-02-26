@@ -21,10 +21,12 @@ TR_REQ_TIME_INTERVAL = 0.2
 class ScreenNo(enum.Enum):
     REAL = '2222'  # 실시간 조회
     INTEREST = '3333'  # 관심종목 조회
+    BALANCE = '4444'  # 계좌평가현황요청
 
 
 class RequestName(enum.Enum):
-    MULTI_CODE_QUERY = 'MULTI_CODE_QUERY'  # 관심종목 조회
+    MULTI_CODE_QUERY = 'RQ_MULTI_CODE_QUERY'  # 관심종목 조회
+    BALANCE = 'RQ_BALANCE'  # 계좌평가현황요청 (OPW00004)
 
 
 class KiwoomListener:
@@ -106,10 +108,13 @@ class Kiwoom(QAxWidget):
     def set_input_value(self, id, value):
         self.dynamicCall("SetInputValue(QString, QString)", id, value)
 
-    def comm_rq_data(self, rqname, trcode, next, screen_no):
-        self.dynamicCall("CommRqData(QString, QString, int, QString)", rqname, trcode, next, screen_no)
-        self.tr_event_loop = QEventLoop()
-        self.tr_event_loop.exec_()
+    def comm_rq_data(self, rq_name: RequestName, tr_code: str, is_next: int, screen_no: ScreenNo):
+        ret = self.dynamicCall("CommRqData(QString, QString, int, QString)",
+                               [rq_name.value, tr_code, is_next, screen_no.value])
+        logger.info(f'CommRqData(). ret: {ret}')
+        if ret == 0:
+            self.tr_event_loop = QEventLoop()
+            self.tr_event_loop.exec_()
 
     def _get_comm_data(self, tr_code: str, record_name: str, index: int, item_name: str) -> str:
         ret = self.dynamicCall("GetCommData(QString, QString, int, QString)",
@@ -123,13 +128,14 @@ class Kiwoom(QAxWidget):
     def _on_receive_tr_data(self, screen_no: str, rq_name: str, tr_code: str, record_name: str, pre_next: str, unused1,
                             unused2, unused3, unused4):
         logger.debug(
-            f"screen_no:{screen_no} rq_name:{rq_name} tr_code:{tr_code} record_name:{record_name} pre_next:{pre_next} unused1:{unused1} unused2:{unused2} unused3:{unused3} unused4:{unused4}")
+            f'screen_no:{screen_no}, rq_name:{rq_name}, tr_code:{tr_code}, record_name:{record_name}, '
+            f'pre_next:{pre_next}, unused1:{unused1}, unused2:{unused2}, unused3:{unused3}, unused4:{unused4}')
         if pre_next == '2':
             self.remained_data = True
         else:
             self.remained_data = False
 
-        if rq_name == Kiwoom.RQ_MULTI_CODE_QUERY:
+        if rq_name == RequestName.MULTI_CODE_QUERY.value:
             count = self._get_repeat_cnt(tr_code, rq_name)
             for i in range(count):
                 code = self._get_comm_data(tr_code, record_name, i, '종목코드')
@@ -143,7 +149,22 @@ class Kiwoom(QAxWidget):
                 logger.info(f'code:{code}, name:{name}, price:{price}')
             self.disconnect_real_data(ScreenNo.INTEREST)
             self.model.set_updated(DataType.TABLE_BALANCE)
-
+        elif rq_name == RequestName.BALANCE.value:
+            # TODO:
+            name = self._get_comm_data(tr_code, record_name, 0, '계좌명')
+            cur_price = self._get_comm_data(tr_code, record_name, 0, '유가잔고평가액')
+            cash = self._get_comm_data(tr_code, record_name, 0, '예수금')
+            count = self._get_repeat_cnt(tr_code, rq_name)
+            buy_total = self._get_comm_data(tr_code, record_name, 0, '총매입금액')
+            logger.info(f'name:{name}, cur_price:{cur_price}, cash:{cash}, count:{count}, buy_total:{buy_total}')
+            for i in range(count):
+                code = self._get_comm_data(tr_code, record_name, i, '종목코드')
+                name = self._get_comm_data(tr_code, record_name, i, '종목명')
+                buy_price_str = self._get_comm_data(tr_code, record_name, i, '평균단가')
+                price_str = self._get_comm_data(tr_code, record_name, i, '현재가')
+                logger.info(f'code:{code}, name:{name}, buy_price_str:{buy_price_str}, price:{price_str}')
+            self.disconnect_real_data(ScreenNo.INTEREST)
+            self.model.set_updated(DataType.TABLE_BALANCE)
         try:
             self.tr_event_loop.exit()
         except AttributeError:
@@ -246,6 +267,16 @@ class Kiwoom(QAxWidget):
     def disconnect_real_data(self, screen_no: ScreenNo):
         ret = self.dynamicCall("DisconnectRealData(QString)", [screen_no.value])
         logger.info(f'DisconnectRealData(). ret: {ret}')
+
+    def request_account_detail(self):
+        logger.info(f'account: {self.model.account}')
+        self.set_input_value('계좌번호', self.model.account)
+        self.set_input_value('비밀번호', '')  # 사용안함(공백)
+        self.set_input_value('상장폐지조회구분', '0')  # 0:전체, 1: 상장폐지종목제외
+        self.set_input_value('비밀번호입력매체구분', '00')  # 고정값?
+        tr_code = 'OPW00004'  # 계좌평가현황요청
+        is_next = 0  # 연속조회요청 여부 (0:조회 , 2:연속)
+        self.comm_rq_data(RequestName.BALANCE,  tr_code,  is_next, ScreenNo.BALANCE)
 
 
 if __name__ == "__main__":

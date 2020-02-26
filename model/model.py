@@ -176,6 +176,10 @@ class Model:
         if self.listener:
             self.listener.on_data_update(DataType.COMBO_ACCOUNT)
 
+    def set_account(self, the_account: str):
+        assert the_account in self.account_list, 'unexpected account!!!'
+        self.account = the_account
+
     def set_condition_list(self, the_condition_dic):
         self.condition_list = []
         for index, name in the_condition_dic.items():

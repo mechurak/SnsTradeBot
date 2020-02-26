@@ -1,7 +1,6 @@
 import sys
 import os
 import logging
-from abc import ABC
 from datetime import datetime
 from PyQt5.QtWidgets import QApplication
 from ui.main_window import MainWindow
@@ -43,10 +42,11 @@ class Manager(MyListener, KiwoomListener):
     # MyListener
     def account_changed(self, the_account):
         logger.info("account_changed. the_account: %s", the_account)
+        self.model.set_account(the_account)
 
     def btn_balance_clicked(self):
         logger.info("btn_balance_clicked")
-        # TODO:
+        self.kiwoom_api.request_account_detail()
 
     def btn_interest_balance_clicked(self):
         logger.info('btn_interest_balance_clicked')
