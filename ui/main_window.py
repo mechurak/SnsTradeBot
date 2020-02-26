@@ -68,10 +68,10 @@ class MainWindow(QMainWindow, ModelListener):
         abspath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "MainWindow.ui")
         self.ui = uic.loadUi(abspath, self)
         self.model.set_listener(self)
-        self.btn_load.clicked.connect(lambda: self.model.load())
-        self.btn_save.clicked.connect(lambda: self.model.save())
-        self.btn_print.clicked.connect(lambda: logger.info(self.model))
-        self.btn_temp_code_add.clicked.connect(lambda: self.model.add_all_temp_stock())
+        self.btn_load.clicked.connect(self.model.load)
+        self.btn_save.clicked.connect(self.model.save)
+        self.btn_print.clicked.connect(self.model.print)
+        self.btn_temp_code_add.clicked.connect(self.model.add_all_temp_stock)
 
     def set_listener(self, the_listener):
         self.listener = the_listener

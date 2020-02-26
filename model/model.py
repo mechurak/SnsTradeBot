@@ -86,6 +86,12 @@ class DataType(enum.Enum):
     TABLE_TEMP_STOCK = 5
 
 
+class HoldType(enum.Enum):
+    INTEREST = 0
+    HOLDING = 1
+    BOTH = 2
+
+
 class ModelListener:
     @abstractmethod
     def on_data_update(self, data_type: DataType):
@@ -110,6 +116,13 @@ class Model:
         for k, v in self.stock_dic.items():
             ret_str += f'  {k}: {v}\n'
         return ret_str
+
+    def print(self):
+        logger.info('====== UserData =======')
+        logger.info(f' - account: {self.account}, {self.account_list}')
+        logger.info(f' - stock_dic[{len(self.stock_dic)}]:')
+        for k, v in self.stock_dic.items():
+            logger.info(f'  {k}: {v}')
 
     def set_listener(self, the_listener: ModelListener):
         self.listener = the_listener
@@ -146,6 +159,17 @@ class Model:
             logger.debug("new code '%s'. create new stock", the_code)
         return self.stock_dic[the_code]
 
+    def get_code_list(self, the_hold_type):
+        if the_hold_type == HoldType.BOTH:
+            return self.stock_dic.values()
+        code_list = []
+        for stock in self.stock_dic.values():
+            if the_hold_type == HoldType.INTEREST and stock.quantity == 0:
+                code_list.append(stock.code)
+            elif the_hold_type == HoldType.HOLDING and stock.quantity > 0:
+                code_list.append(stock.code)
+        return code_list
+
     def set_account_list(self, the_account_list):
         self.account_list = the_account_list
         self.account = the_account_list[0]
@@ -172,6 +196,10 @@ class Model:
         if self.listener:
             self.listener.on_data_update(DataType.TABLE_BALANCE)
             self.listener.on_data_update(DataType.TABLE_TEMP_STOCK)
+
+    def set_updated(self, the_data_type: DataType):
+        if self.listener:
+            self.listener.on_data_update(the_data_type)
 
 
 if __name__ == "__main__":

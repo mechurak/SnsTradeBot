@@ -8,7 +8,7 @@ from ui.main_window import MainWindow
 from ui.main_window import MyListener
 from openapi.kiwoom import Kiwoom
 from openapi.kiwoom import KiwoomListener
-from model.model import Model
+from model.model import Model, HoldType
 import slack.run
 import threading
 
@@ -46,15 +46,20 @@ class Manager(MyListener, KiwoomListener):
 
     def btn_balance_clicked(self):
         logger.info("btn_balance_clicked")
+        # TODO:
 
     def btn_interest_balance_clicked(self):
         logger.info('btn_interest_balance_clicked')
+        interest_code_list = self.model.get_code_list(HoldType.INTEREST)
+        self.kiwoom_api.comm_kw_rq_data_async(interest_code_list)
 
     def btn_real_clicked(self):
         logger.info('btn_real_clicked')
+        # TODO:
 
     def btn_code_add_clicked(self):
         logger.info('btn_code_add_clicked')
+        # TODO:
 
     def btn_refresh_condition_list_clicked(self):
         logger.info("btn_refresh_condition_list_clicked")

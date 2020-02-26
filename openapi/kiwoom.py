@@ -1,3 +1,4 @@
+import enum
 import os
 import sys
 import logging
@@ -15,6 +16,15 @@ from model.model import ModelListener
 logger = logging.getLogger(__name__)
 
 TR_REQ_TIME_INTERVAL = 0.2
+
+
+class ScreenNo(enum.Enum):
+    REAL = '2222'  # 실시간 조회
+    INTEREST = '3333'  # 관심종목 조회
+
+
+class RequestName(enum.Enum):
+    MULTI_CODE_QUERY = 'MULTI_CODE_QUERY'  # 관심종목 조회
 
 
 class KiwoomListener:
@@ -130,7 +140,9 @@ class Kiwoom(QAxWidget):
                 stock = self.model.get_stock(code)
                 stock.name = name
                 stock.cur_price = price
-                logger.info(f'code:{code} name:{name} price:{price}')
+                logger.info(f'code:{code}, name:{name}, price:{price}')
+            self.disconnect_real_data(ScreenNo.INTEREST)
+            self.model.set_updated(DataType.TABLE_BALANCE)
 
         try:
             self.tr_event_loop.exit()
@@ -197,25 +209,24 @@ class Kiwoom(QAxWidget):
             logger.debug("code: %s, name: %s", code, name)
         self.model.set_temp_stock_list(temp_stock_list)
 
-    def comm_kw_rq_data(self, the_code_list: list):
-        logger.debug(f'comm_kw_rq_data() {the_code_list}')
-        code_list_str = ";".join(the_code_list)
-        count = len(code_list_str)
-        is_next = 0
-        type_flag = 0
-        rq_name = Kiwoom.RQ_MULTI_CODE_QUERY
-        screen_no = '2222'
-        """복수종목조회 Tran 을 서버로 송신한다
-        @param  sArrCode 종목리스트
-        @param  bNext 연속조회요청
-        @param  nCodeCount 종목개수
-        @param  nTypeFlag 조회구분
-        @param  sRQName 사용자구분 명
-        @param  sScreenNo 화면번호
+    def comm_kw_rq_data_async(self, the_code_list: list):
+        """ 복수종목조회 Tran 을 서버로 송신한다
+        :callback: _on_receive_tr_data()
         """
+        logger.debug(f'comm_kw_rq_data() {the_code_list}')
+        count = len(the_code_list)
+        if count == 0:
+            logger.error('code_list is empty!!')
+            return -1
+        code_list_str = ";".join(the_code_list)  # 종목리스트
+        is_next = 0  # 연속조회요청 여부
+        code_count = count  # 종목개수
+        type_flag = 0  # 조회구분 (0: 주식관심종목정보 , 선물옵션관심종목정보)
+        rq_name = RequestName.MULTI_CODE_QUERY.value  # 사용자구분 명
+        screen_no = ScreenNo.INTEREST.value  # 화면변허
         ret = self.dynamicCall("CommKwRqData(QString, int, int, int, QString, QString)",
-                               [code_list_str, is_next, count, type_flag, rq_name, screen_no])
-        logger.info(f'ret: {ret}')
+                               [code_list_str, is_next, code_count, type_flag, rq_name, screen_no])
+        logger.info(f'CommKwRqData(). ret: {ret}')  # 0: 정상처리
         return ret
 
     def set_real_reg(self, the_code_list: list):
@@ -223,9 +234,18 @@ class Kiwoom(QAxWidget):
         code_list_str = ';'.join(the_code_list)
         fid = "9001;10;13"  # 종목코드,업종코드;현재가;누적거래량
         ret = self.dynamicCall("SetRealReg(QString, QString, QString, QString)",
-                               ['3333', code_list_str, fid, "1"])  # "1" 종목 추가, "0" 기존 종목은 제외
+                               [ScreenNo.REAL.value, code_list_str, fid, "1"])  # "1" 종목 추가, "0" 기존 종목은 제외
         logger.info(f'call set_real_reg(). ret: {ret}')
         return ret
+
+    def set_real_remove(self, the_code):
+        logger.info("the_code %s", the_code)
+        ret = self.dynamicCall("SetRealRemove(QString, QString)", [ScreenNo.REAL.value, the_code])
+        logger.info(f'SetRealRemove(). ret: {ret}')
+
+    def disconnect_real_data(self, screen_no: ScreenNo):
+        ret = self.dynamicCall("DisconnectRealData(QString)", [screen_no.value])
+        logger.info(f'DisconnectRealData(). ret: {ret}')
 
 
 if __name__ == "__main__":
@@ -277,7 +297,7 @@ if __name__ == "__main__":
     kiwoom_api.send_condition_async('1111', condition_name_dic[1], 1, 0)
 
     input_code_list = ['004540', '005360', '053110']
-    kiwoom_api.comm_kw_rq_data(input_code_list)
+    kiwoom_api.comm_kw_rq_data_async(input_code_list)
 
     time.sleep(1)
 
