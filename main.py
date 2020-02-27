@@ -57,9 +57,9 @@ class Manager(MyListener, KiwoomListener):
         logger.info('btn_real_clicked')
         # TODO:
 
-    def btn_code_add_clicked(self):
-        logger.info('btn_code_add_clicked')
-        # TODO:
+    def btn_code_add_clicked(self, code):
+        logger.info(f'btn_code_add_clicked. code: {code}')
+        self.kiwoom_api.request_code_info(code)
 
     def btn_refresh_condition_list_clicked(self):
         logger.info("btn_refresh_condition_list_clicked")

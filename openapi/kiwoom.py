@@ -22,11 +22,13 @@ class ScreenNo(enum.Enum):
     REAL = '2222'  # 실시간 조회
     INTEREST = '3333'  # 관심종목 조회
     BALANCE = '4444'  # 계좌평가현황요청
+    CODE = '5555'  # 주식기본정보요청
 
 
 class RequestName(enum.Enum):
     MULTI_CODE_QUERY = 'RQ_MULTI_CODE_QUERY'  # 관심종목 조회
     BALANCE = 'RQ_BALANCE'  # 계좌평가현황요청 (OPW00004)
+    CODE_INFO = 'RQ_CODE_INFO'  # 주식기본정보요청 (opt10001)
 
 
 class KiwoomListener:
@@ -165,6 +167,20 @@ class Kiwoom(QAxWidget):
                 logger.info(f'code:{code}, name:{name}, buy_price_str:{buy_price_str}, price:{price_str}')
             self.disconnect_real_data(ScreenNo.INTEREST)
             self.model.set_updated(DataType.TABLE_BALANCE)
+        elif rq_name == RequestName.CODE_INFO.value:
+            code = self._get_comm_data(tr_code, record_name, 0, '종목코드').strip()
+            name = self._get_comm_data(tr_code, record_name, 0, '종목명').strip()
+            price_str = self._get_comm_data(tr_code, record_name, 0, '현재가').strip()
+            if code and name and price_str:
+                price = int(price_str)
+                price = price if price >= 0 else price * (-1)
+                stock = self.model.get_stock(code)
+                stock.name = name
+                stock.cur_price = price
+                logger.info(f'code:{code}, name:{name}, price:{price}')
+                self.model.set_updated(DataType.TABLE_BALANCE)
+            else:
+                logger.error("error!!")
         try:
             self.tr_event_loop.exit()
         except AttributeError:
@@ -277,6 +293,13 @@ class Kiwoom(QAxWidget):
         tr_code = 'OPW00004'  # 계좌평가현황요청
         is_next = 0  # 연속조회요청 여부 (0:조회 , 2:연속)
         self.comm_rq_data(RequestName.BALANCE,  tr_code,  is_next, ScreenNo.BALANCE)
+
+    def request_code_info(self, the_code):
+        logger.info(f'code: {the_code}')
+        self.set_input_value('종목코드', the_code)
+        tr_code = 'opt10001'  # 주식기본정보요청
+        is_next = 0
+        self.comm_rq_data(RequestName.CODE_INFO, tr_code, is_next, ScreenNo.CODE)
 
 
 if __name__ == "__main__":

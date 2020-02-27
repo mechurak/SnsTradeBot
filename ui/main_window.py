@@ -32,7 +32,7 @@ class MyListener:
         pass
 
     @abstractmethod
-    def btn_code_add_clicked(self):
+    def btn_code_add_clicked(self, code):
         pass
 
     @abstractmethod
@@ -79,8 +79,13 @@ class MainWindow(QMainWindow, ModelListener):
         self.btn_balance.clicked.connect(self.listener.btn_balance_clicked)
         self.btn_interest_balance.clicked.connect(self.listener.btn_interest_balance_clicked)
         self.btn_real.clicked.connect(self.listener.btn_real_clicked)
-        self.btn_code_add.clicked.connect(self.listener.btn_code_add_clicked)
+        self.btn_code_add.clicked.connect(self._on_btn_code_add_clicked)
         self.btn_refresh_condition.clicked.connect(self.listener.btn_refresh_condition_list_clicked)
+
+    def _on_btn_code_add_clicked(self):
+        code = self.edit_code.text()
+        self.listener.btn_code_add_clicked(code)
+        self.edit_code.setText('')
 
     def on_data_update(self, data_type: DataType):
         logger.info(f"data_type: {data_type}")
@@ -154,8 +159,8 @@ if __name__ == "__main__":
         def btn_real_clicked(self):
             logger.info('btn_real_clicked')
 
-        def btn_code_add_clicked(self):
-            logger.info('btn_code_add_clicked')
+        def btn_code_add_clicked(self, code):
+            logger.info(f'btn_code_add_clicked. code: {code}')
 
         def btn_refresh_condition_list_clicked(self):
             logger.info("btn_refresh_condition_list_clicked")
