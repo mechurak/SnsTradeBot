@@ -15,8 +15,8 @@ class Stock:
         self.buy_price: int = 0  # 매입가
         self.quantity: int = 0  # 보유수량
         self.earning_rate: float = 0.0  # 수익률
-        self.buy_strategy_dic = {}
-        self.sell_strategy_dic = {}
+        self.buy_strategy_dic: dict = {}
+        self.sell_strategy_dic: dict = {}
         self.target_quantity: int = 0  # 목표보유수량
 
     def __str__(self):
@@ -89,7 +89,8 @@ class DataType(enum.Enum):
 class HoldType(enum.Enum):
     INTEREST = 0
     HOLDING = 1
-    BOTH = 2
+    TARGET = 2
+    ALL = 10
 
 
 class ModelListener:
@@ -160,14 +161,23 @@ class Model:
         return self.stock_dic[the_code]
 
     def get_code_list(self, the_hold_type):
-        if the_hold_type == HoldType.BOTH:
-            return self.stock_dic.values()
+        if the_hold_type == HoldType.ALL:
+            return self.stock_dic.keys()
         code_list = []
-        for stock in self.stock_dic.values():
-            if the_hold_type == HoldType.INTEREST and stock.quantity == 0:
-                code_list.append(stock.code)
-            elif the_hold_type == HoldType.HOLDING and stock.quantity > 0:
-                code_list.append(stock.code)
+        if the_hold_type == HoldType.INTEREST:
+            for stock in self.stock_dic.values():
+                if stock.quantity == 0:
+                    code_list.append(stock.code)
+        elif the_hold_type == HoldType.HOLDING:
+            for stock in self.stock_dic.values():
+                if stock.quantity > 0:
+                    code_list.append(stock.code)
+        elif the_hold_type == HoldType.TARGET:
+            for stock in self.stock_dic.values():
+                code_list.append(stock.code)  # For now, append all codes for test
+                # TODO: Append the code that has strategy
+                # if len(stock.buy_strategy_dic) or len(stock.sell_strategy_dic):
+                #     code_list.append(stock.code)
         return code_list
 
     def set_account_list(self, the_account_list):

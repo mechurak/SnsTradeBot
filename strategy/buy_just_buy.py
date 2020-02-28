@@ -11,7 +11,7 @@ class BuyJustBuy(StrategyBase):
         super().__init__(the_stock, the_param_dic)
         logger.info("%s strategy created for %s", self.NAME, self.stock.name)
 
-    def on_real_data(self, the_code, the_type, the_data):
+    def on_price_updated(self):
         logger.info("JustBuy")
         if self.is_queued:
             logger.info("is_queued. do nothing")

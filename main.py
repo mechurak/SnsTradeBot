@@ -55,7 +55,8 @@ class Manager(MyListener, KiwoomListener):
 
     def btn_real_clicked(self):
         logger.info('btn_real_clicked')
-        # TODO:
+        target_code_list = self.model.get_code_list(HoldType.TARGET)
+        self.kiwoom_api.set_real_reg(target_code_list)
 
     def btn_code_add_clicked(self, code):
         logger.info(f'btn_code_add_clicked. code: {code}')

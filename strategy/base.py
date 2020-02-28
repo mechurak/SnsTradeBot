@@ -21,7 +21,7 @@ class StrategyBase:
     def get_param_dic(self):
         return {}
 
-    def on_real_data(self, the_code, the_type, the_data):
+    def on_price_updated(self):
         pass
 
     def on_condition(self, the_index, the_name):

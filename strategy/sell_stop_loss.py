@@ -22,7 +22,7 @@ class SellStopLoss(StrategyBase):
     def get_param_dic(self):
         return {'threshold': self.threshold}
 
-    def on_real_data(self, the_code, the_type, the_data):
+    def on_price_updated(self):
         logger.debug("StopLoss. %s", self.stock.name)
         if self.is_queued:
             logger.info("is_queued. do nothing")

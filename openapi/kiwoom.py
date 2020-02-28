@@ -118,6 +118,10 @@ class Kiwoom(QAxWidget):
             self.tr_event_loop = QEventLoop()
             self.tr_event_loop.exec_()
 
+    def _get_comm_real_data(self, code: str, fid: int) -> str:
+        ret = self.dynamicCall("GetCommRealData(QString, int)", code, fid)
+        return ret.strip()
+
     def _get_comm_data(self, tr_code: str, record_name: str, index: int, item_name: str) -> str:
         ret = self.dynamicCall("GetCommData(QString, QString, int, QString)",
                                [tr_code, record_name, index, item_name])
@@ -188,6 +192,19 @@ class Kiwoom(QAxWidget):
 
     def _on_receive_real_data(self, code: str, real_type: str, real_data: str):
         logger.debug(f"code:{code} real_type:{real_type} real_data:{real_data}")
+        if real_type == '장시작시간':
+            # TODO: Trigger time related strategy
+            pass
+        elif real_type == '주식체결':
+            price_str = self._get_comm_real_data(code, 10)
+            cur_price = int(price_str)
+            cur_price = cur_price if cur_price >= 0 else cur_price * (-1)
+            stock = self.model.get_stock(code)
+            stock.cur_price = cur_price
+            for strategy in stock.sell_strategy_dic.values():
+                strategy.on_price_updated()
+            for strategy in stock.buy_strategy_dic.values():
+                strategy.on_price_updated()
 
     def send_order(self, rqname, screen_no, acc_no, order_type, code, quantity, price, hoga, order_no):
         self.dynamicCall("SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
