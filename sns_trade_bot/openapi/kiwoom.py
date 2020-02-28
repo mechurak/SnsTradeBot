@@ -9,9 +9,9 @@ from datetime import datetime
 from PyQt5.QtWidgets import *
 from PyQt5.QAxContainer import *
 from PyQt5.QtCore import *
-from model.model import Model, DataType
-from model.model import Stock
-from model.model import ModelListener
+from sns_trade_bot.model.model import Model, DataType
+from sns_trade_bot.model.model import Stock
+from sns_trade_bot.model.model import ModelListener
 
 logger = logging.getLogger(__name__)
 
@@ -323,7 +323,7 @@ if __name__ == "__main__":
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s [%(levelname)s|%(filename)s:%(lineno)s(%(funcName)s)] %(message)s')
-    LOG_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../log")
+    LOG_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../log")
     if not os.path.exists(LOG_DIR):
         os.makedirs(LOG_DIR)
     file_name = LOG_DIR + "/" + datetime.now().strftime("%Y%m%d-%H%M%S") + ".log"

@@ -1,5 +1,5 @@
 import logging
-from strategy.base import StrategyBase
+from sns_trade_bot.strategy.base import StrategyBase
 
 logger = logging.getLogger(__name__)
 

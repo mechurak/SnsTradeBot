@@ -1,7 +1,7 @@
 import logging
 import os
 import sys
-from model.model import Model, ModelListener, DataType
+from sns_trade_bot.model.model import Model, ModelListener, DataType
 from abc import abstractmethod
 
 from PyQt5 import uic

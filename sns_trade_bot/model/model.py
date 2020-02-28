@@ -38,8 +38,8 @@ class Stock:
         return ret
 
     def add_buy_strategy(self, the_strategy_name, the_param_dic):
-        from strategy.buy_just_buy import BuyJustBuy
-        from strategy.buy_on_opening import BuyOnOpening
+        from sns_trade_bot.strategy.buy_just_buy import BuyJustBuy
+        from sns_trade_bot.strategy.buy_on_opening import BuyOnOpening
         if the_strategy_name == 'buy_just_buy':
             self.buy_strategy_dic[the_strategy_name] = BuyJustBuy(self, the_param_dic)
         if the_strategy_name == 'buy_on_opening':
@@ -48,9 +48,9 @@ class Stock:
             logger.error(f'unknown buy strategy "{the_strategy_name}" for "{self.name}"')
 
     def add_sell_strategy(self, the_strategy_name, the_param_dic):
-        from strategy.sell_on_closing import SellOnClosing
-        from strategy.sell_stop_loss import SellStopLoss
-        from strategy.sell_on_condition import SellOnCondition
+        from sns_trade_bot.strategy.sell_on_closing import SellOnClosing
+        from sns_trade_bot.strategy.sell_stop_loss import SellStopLoss
+        from sns_trade_bot.strategy.sell_on_condition import SellOnCondition
         if the_strategy_name == 'sell_on_closing':
             self.sell_strategy_dic[the_strategy_name] = SellOnClosing(self, the_param_dic)
         elif the_strategy_name == 'sell_stop_loss':
@@ -100,7 +100,7 @@ class ModelListener:
 
 
 class Model:
-    SAVE_FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../my_stock_list.json')
+    SAVE_FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../my_stock_list.json')
 
     def __init__(self):
         self.account = '1234'
