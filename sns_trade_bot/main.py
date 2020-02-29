@@ -72,7 +72,7 @@ class Manager(UiListener, KiwoomListener):
 
     def btn_query_condition_clicked(self, condition):
         logger.info(f'btn_query_condition_clicked. {condition.index} {condition.name}')
-        ret = self.kiwoom_api.send_condition_async('1111', condition.name, condition.index, 0)
+        self.kiwoom_api.send_condition_async('1111', condition.name, condition.index, 0)
 
     # KiwoomListener
     def on_stock_quantity_changed(self, code: str):

@@ -101,8 +101,8 @@ class Kiwoom(QAxWidget):
         ret = self.dynamicCall("GetConnectState()")
         return ret
 
-    def set_input_value(self, id, value):
-        self.dynamicCall("SetInputValue(QString, QString)", id, value)
+    def set_input_value(self, item: str, value: str):
+        self.dynamicCall("SetInputValue(QString, QString)", item, value)
 
     def comm_rq_data(self, rq_name: RequestName, tr_code: str, is_next: int, screen_no: ScreenNo):
         ret = self.dynamicCall("CommRqData(QString, QString, int, QString)",
@@ -231,7 +231,7 @@ class Kiwoom(QAxWidget):
         return ret
 
     def _receive_chejan_data(self, gubun, item_cnt, fid_list):
-        logger.info(gubun)
+        logger.info(f'gubun:{gubun}, item_cnt:{item_cnt}, fid_list:{fid_list}')
         logger.info(self.get_chejan_data(9203))
         logger.info(self.get_chejan_data(302))
         logger.info(self.get_chejan_data(900))
@@ -253,18 +253,24 @@ class Kiwoom(QAxWidget):
         self.temp_event_loop.exec_()
         return ret
 
-    def _on_receive_condition_ver(self, lRet, sMsg):
-        logger.debug("%d %s", lRet, sMsg)
+    def _on_receive_condition_ver(self, ret: int, msg: str):
+        logger.debug(f'ret: {ret}, msg: {msg}')  # ret: 사용자 조건식 저장 성공여부 (1: 성공, 나머지 실패)
         self.temp_event_loop.exit()
 
-    def send_condition_async(self, screen_num, condition_name, condition_index, query_type):
+    def send_condition_async(self, screen_num: str, condition_name: str, condition_index: int, query_type: int):
         """ condition 만족하는 종목 조회 or 실시간 등록
 
+        :param screen_num:
+        :param condition_name:
+        :param condition_index:
         :param query_type: 조회구분(0:일반조회, 1:실시간조회, 2:연속조회)
+        :return: 성공 1, 실패 0
         :callback: _on_receive_tr_condition()
         """
         ret = self.dynamicCall("SendCondition(QString, QString, int, int)", screen_num, condition_name, condition_index,
                                query_type)
+        if ret != 1:
+            logger.error('ret: {ret}')
         return ret
 
     def _on_receive_tr_condition(self, scr_no, str_code_list, str_condition_name, index, has_next):

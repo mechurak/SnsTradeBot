@@ -94,7 +94,6 @@ class MainWindow(QMainWindow, ModelListener):
             self.combo_account.addItems(self.model.account_list)
             self.combo_account.setCurrentIndex(self.ui.combo_account.findText(self.model.account))
         elif data_type == DataType.TABLE_BALANCE:
-            self.is_user_changing_balance = False
             header = ["종목코드", "종목명", "현재가", "매입가", "보유수량", "목표보유수량", "수익률", "매수전략", "매도전략"]
             self.table_balance.clear()
             self.table_balance.setColumnCount(len(header))
@@ -110,7 +109,6 @@ class MainWindow(QMainWindow, ModelListener):
                 self.table_balance.setItem(i, 6, QTableWidgetItem(str(stock.earning_rate)))
                 self.table_balance.setItem(i, 7, QTableWidgetItem(str(list(stock.buy_strategy_dic.keys()))))
                 self.table_balance.setItem(i, 8, QTableWidgetItem(str(list(stock.buy_strategy_dic.keys()))))
-            self.is_user_changing_balance = True
         elif data_type == DataType.TABLE_CONDITION:
             header = ["인덱스", "조건명", "신호종류", "적용유무", "요청버튼"]
             self.table_condition.setColumnCount(len(header))
