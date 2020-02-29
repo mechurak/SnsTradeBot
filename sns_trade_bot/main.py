@@ -3,7 +3,7 @@ import os
 import logging
 from datetime import datetime
 from PyQt5.QtWidgets import QApplication
-from sns_trade_bot.ui.main_window import MainWindow, MyListener
+from sns_trade_bot.ui.main_window import MainWindow, UiListener
 from sns_trade_bot.openapi.kiwoom import Kiwoom, KiwoomListener
 from sns_trade_bot.model.model import Model, HoldType
 import sns_trade_bot.slack.run
@@ -29,7 +29,7 @@ logger.addHandler(stream_handler)
 logger.info(f'file_name: {file_name}')
 
 
-class Manager(MyListener, KiwoomListener):
+class Manager(UiListener, KiwoomListener):
     model: Model
     main_window: MainWindow
     kiwoom_api: Kiwoom
@@ -39,7 +39,7 @@ class Manager(MyListener, KiwoomListener):
         self.main_window = the_main_window
         self.kiwoom_api = the_kiwoom_api
 
-    # MyListener
+    # UiListener
     def account_changed(self, the_account):
         logger.info("account_changed. the_account: %s", the_account)
         self.model.set_account(the_account)
@@ -75,11 +75,8 @@ class Manager(MyListener, KiwoomListener):
         ret = self.kiwoom_api.send_condition_async('1111', condition.name, condition.index, 0)
 
     # KiwoomListener
-    def on_receive_tr_data(self):
-        logger.info("on_receive_tr_data")
-
-    def on_receive_chejan_data(self):
-        logger.info("on_receive_chejan_data")
+    def on_stock_quantity_changed(self, code: str):
+        logger.info(f'on_stock_quantity_changed. code: {code}')
 
 
 if __name__ == "__main__":

@@ -95,7 +95,7 @@ class HoldType(enum.Enum):
 
 class ModelListener:
     @abstractmethod
-    def on_data_update(self, data_type: DataType):
+    def on_data_updated(self, data_type: DataType):
         pass
 
 
@@ -152,7 +152,7 @@ class Model:
             for k, v in loaded_stock['sell_strategy_dic'].items():
                 stock.add_sell_strategy(k, v)
         if self.listener:
-            self.listener.on_data_update(DataType.TABLE_BALANCE)
+            self.listener.on_data_updated(DataType.TABLE_BALANCE)
 
     def get_stock(self, the_code):
         if the_code not in self.stock_dic:
@@ -184,7 +184,7 @@ class Model:
         self.account_list = the_account_list
         self.account = the_account_list[0]
         if self.listener:
-            self.listener.on_data_update(DataType.COMBO_ACCOUNT)
+            self.listener.on_data_updated(DataType.COMBO_ACCOUNT)
 
     def set_account(self, the_account: str):
         assert the_account in self.account_list, 'unexpected account!!!'
@@ -195,12 +195,12 @@ class Model:
         for index, name in the_condition_dic.items():
             self.condition_list.append(Condition(index, name))
         if self.listener:
-            self.listener.on_data_update(DataType.TABLE_CONDITION)
+            self.listener.on_data_updated(DataType.TABLE_CONDITION)
 
     def set_temp_stock_list(self, temp_stock_list: list):
         self.temp_stock_list = temp_stock_list
         if self.listener:
-            self.listener.on_data_update(DataType.TABLE_TEMP_STOCK)
+            self.listener.on_data_updated(DataType.TABLE_TEMP_STOCK)
 
     def add_all_temp_stock(self):
         for stock in self.temp_stock_list:
@@ -208,12 +208,12 @@ class Model:
                 self.stock_dic[stock.code] = stock
         self.temp_stock_list = []
         if self.listener:
-            self.listener.on_data_update(DataType.TABLE_BALANCE)
-            self.listener.on_data_update(DataType.TABLE_TEMP_STOCK)
+            self.listener.on_data_updated(DataType.TABLE_BALANCE)
+            self.listener.on_data_updated(DataType.TABLE_TEMP_STOCK)
 
     def set_updated(self, the_data_type: DataType):
         if self.listener:
-            self.listener.on_data_update(the_data_type)
+            self.listener.on_data_updated(the_data_type)
 
 
 if __name__ == "__main__":

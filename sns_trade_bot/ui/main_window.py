@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import *
 logger = logging.getLogger(__name__)
 
 
-class MyListener:
+class UiListener:
     """
     Listen user action
     """
@@ -87,7 +87,7 @@ class MainWindow(QMainWindow, ModelListener):
         self.listener.btn_code_add_clicked(code)
         self.edit_code.setText('')
 
-    def on_data_update(self, data_type: DataType):
+    def on_data_updated(self, data_type: DataType):
         logger.info(f"data_type: {data_type}")
         if data_type == DataType.COMBO_ACCOUNT:
             self.combo_account.clear()
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     logger.addHandler(stream_handler)
 
 
-    class TempListener(MyListener):
+    class TempListener(UiListener):
         def account_changed(self, the_account):
             logger.info("account_changed. the_account: %s", the_account)
 

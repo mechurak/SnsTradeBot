@@ -29,7 +29,7 @@ class TempKiwoomListener(KiwoomListener):
 
 
 class TempModelListener(ModelListener):
-    def on_data_update(self, data_type: DataType):
+    def on_data_updated(self, data_type: DataType):
         logger.info(f"on_data_update. {data_type}")
 
 

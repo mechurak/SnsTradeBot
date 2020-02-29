@@ -33,15 +33,10 @@ class RequestName(enum.Enum):
 
 class KiwoomListener:
     """
-    Notify kiwoom events to UI
+    Notify kiwoom events to Main
     """
-
     @abstractmethod
-    def on_receive_tr_data(self):
-        pass
-
-    @abstractmethod
-    def on_receive_chejan_data(self):
+    def on_stock_quantity_changed(self, code: str):
         pass
 
 
@@ -333,19 +328,13 @@ if __name__ == "__main__":
     logger.addHandler(stream_handler)
 
     class TempKiwoomListener(KiwoomListener):
-        def on_connect(self, err_code):
-            logger.info("on_connect!!! in ui. err_code: %d", err_code)
-
-        def on_receive_tr_data(self):
-            logger.info("on_receive_tr_data")
-
-        def on_receive_chejan_data(self):
-            logger.info("on_receive_chejan_data")
+        def on_stock_quantity_changed(self, code):
+            logger.info(f'on_stock_quantity_changed. code: {code}')
 
 
     class TempModelListener(ModelListener):
-        def on_data_update(self, data_type: DataType):
-            logger.info(f"on_data_update. {data_type}")
+        def on_data_updated(self, data_type: DataType):
+            logger.info(f"on_data_updated. {data_type}")
 
 
     app = QApplication(sys.argv)
