@@ -26,7 +26,7 @@ class ScreenNo(enum.Enum):
 
 
 class RequestName(enum.Enum):
-    MULTI_CODE_QUERY = 'RQ_MULTI_CODE_QUERY'  # 관심종목 조회
+    MULTI_CODE_QUERY = 'RQ_MULTI_CODE_QUERY'  # 관심종목정보요청 (OPTKWFID)
     BALANCE = 'RQ_BALANCE'  # 계좌평가현황요청 (OPW00004)
     CODE_INFO = 'RQ_CODE_INFO'  # 주식기본정보요청 (opt10001)
 
@@ -35,6 +35,7 @@ class KiwoomListener:
     """
     Notify kiwoom events to Main
     """
+
     @abstractmethod
     def on_stock_quantity_changed(self, code: str):
         pass
@@ -120,8 +121,12 @@ class Kiwoom(QAxWidget):
                                [tr_code, record_name, index, item_name])
         return ret.strip()
 
-    def _get_repeat_cnt(self, tr_code: str, rq_name: str):
-        ret = self.dynamicCall("GetRepeatCnt(QString, QString)", tr_code, rq_name)
+    def _get_repeat_cnt(self, tr_code: str):
+        target_record = {
+            'OPTKWFID': '관심종목정보',  # 관심종목정보요청
+            'OPW00004': '종목별계좌평가현황',  # 계좌평가현황요청
+        }
+        ret = self.dynamicCall("GetRepeatCnt(QString, QString)", tr_code, target_record[tr_code])
         return ret
 
     def _on_receive_tr_data(self, screen_no: str, rq_name: str, tr_code: str, record_name: str, pre_next: str, unused1,
@@ -135,7 +140,7 @@ class Kiwoom(QAxWidget):
             self.remained_data = False
 
         if rq_name == RequestName.MULTI_CODE_QUERY.value:
-            count = self._get_repeat_cnt(tr_code, rq_name)
+            count = self._get_repeat_cnt(tr_code)
             for i in range(count):
                 code = self._get_comm_data(tr_code, record_name, i, '종목코드')
                 name = self._get_comm_data(tr_code, record_name, i, '종목명')
@@ -149,20 +154,38 @@ class Kiwoom(QAxWidget):
             self.disconnect_real_data(ScreenNo.INTEREST)
             self.model.set_updated(DataType.TABLE_BALANCE)
         elif rq_name == RequestName.BALANCE.value:
-            # TODO:
-            name = self._get_comm_data(tr_code, record_name, 0, '계좌명')
-            cur_price = self._get_comm_data(tr_code, record_name, 0, '유가잔고평가액')
-            cash = self._get_comm_data(tr_code, record_name, 0, '예수금')
-            count = self._get_repeat_cnt(tr_code, rq_name)
-            buy_total = self._get_comm_data(tr_code, record_name, 0, '총매입금액')
-            logger.info(f'name:{name}, cur_price:{cur_price}, cash:{cash}, count:{count}, buy_total:{buy_total}')
+            account_name = self._get_comm_data(tr_code, record_name, 0, '계좌명')
+            cur_balance_str = self._get_comm_data(tr_code, record_name, 0, '유가잔고평가액')
+            cash_str = self._get_comm_data(tr_code, record_name, 0, '예수금')
+            buy_total_str = self._get_comm_data(tr_code, record_name, 0, '총매입금액')
+            print_count_str = self._get_comm_data(tr_code, record_name, 0, '출력건수')
+            cur_balance = int(cur_balance_str)
+            cash = int(cash_str)
+            buy_total = int(buy_total_str)
+            print_count = int(print_count_str)
+            count = self._get_repeat_cnt(tr_code)
+            logger.info(f'account_name:{account_name}, cur_balance:{cur_balance}, cash:{cash}, buy_total:{buy_total}, '
+                        f'print_count:{print_count}, count:{count}')
             for i in range(count):
                 code = self._get_comm_data(tr_code, record_name, i, '종목코드')
                 name = self._get_comm_data(tr_code, record_name, i, '종목명')
+                quantity = self._get_comm_data(tr_code, record_name, i, '보유수량')
                 buy_price_str = self._get_comm_data(tr_code, record_name, i, '평균단가')
-                price_str = self._get_comm_data(tr_code, record_name, i, '현재가')
-                logger.info(f'code:{code}, name:{name}, buy_price_str:{buy_price_str}, price:{price_str}')
-            self.disconnect_real_data(ScreenNo.INTEREST)
+                cur_price_str = self._get_comm_data(tr_code, record_name, i, '현재가')
+                earning_rate_str = self._get_comm_data(tr_code, record_name, i, '손익율')
+                logger.debug(f'code:{code}, name:{name}, quantity:{quantity}, buy_price_str:{buy_price_str}, '
+                             f'cur_price_str:{cur_price_str}, earning_rate_str:{earning_rate_str}')
+                buy_price = int(buy_price_str)
+                cur_price = int(cur_price_str)
+                cur_price = cur_price if cur_price >= 0 else cur_price * (-1)
+                earning_rate = float(earning_rate_str) / 100
+                stock = self.model.get_stock(code)
+                stock.name = name
+                stock.cur_price = cur_price
+                stock.quantity = quantity
+                stock.buy_price = buy_price
+                logger.info(f'code:{code}, name:{name}, quantity:{quantity}, buy_price:{buy_price}, '
+                            f'cur_price:{cur_price}, earning_rate:{earning_rate}')
             self.model.set_updated(DataType.TABLE_BALANCE)
         elif rq_name == RequestName.CODE_INFO.value:
             code = self._get_comm_data(tr_code, record_name, 0, '종목코드').strip()
@@ -302,7 +325,7 @@ class Kiwoom(QAxWidget):
         self.set_input_value('비밀번호입력매체구분', '00')  # 고정값?
         tr_code = 'OPW00004'  # 계좌평가현황요청
         is_next = 0  # 연속조회요청 여부 (0:조회 , 2:연속)
-        self.comm_rq_data(RequestName.BALANCE,  tr_code,  is_next, ScreenNo.BALANCE)
+        self.comm_rq_data(RequestName.BALANCE, tr_code, is_next, ScreenNo.BALANCE)
 
     def request_code_info(self, the_code):
         logger.info(f'code: {the_code}')
@@ -326,6 +349,7 @@ if __name__ == "__main__":
     stream_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
     logger.addHandler(stream_handler)
+
 
     class TempKiwoomListener(KiwoomListener):
         def on_stock_quantity_changed(self, code):
