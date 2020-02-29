@@ -52,8 +52,6 @@ class Kiwoom(QAxWidget):
     tr_event_loop = None
     temp_event_loop = None
 
-    RQ_MULTI_CODE_QUERY = 'MULTI_CODE_QUERY'
-
     def __init__(self, the_model):
         super().__init__()
         self.model = the_model
