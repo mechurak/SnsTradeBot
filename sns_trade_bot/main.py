@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 from PyQt5.QtWidgets import QApplication
 from sns_trade_bot.ui.main_window import MainWindow, UiListener
-from sns_trade_bot.openapi.kiwoom import Kiwoom, KiwoomListener
+from sns_trade_bot.openapi.kiwoom import Kiwoom
 from sns_trade_bot.model.model import Model, HoldType
 import sns_trade_bot.slack.run
 import threading
@@ -29,7 +29,7 @@ logger.addHandler(stream_handler)
 logger.info(f'file_name: {file_name}')
 
 
-class Manager(UiListener, KiwoomListener):
+class Manager(UiListener):
     model: Model
     main_window: MainWindow
     kiwoom_api: Kiwoom
@@ -66,17 +66,10 @@ class Manager(UiListener, KiwoomListener):
         logger.info("btn_refresh_condition_list_clicked")
         ret = self.kiwoom_api.get_condition_load_async()
         assert ret == 1, "get_condition_load_async() failed"
-        condition_name_dic = self.kiwoom_api.get_condition_name_list()
-        logger.debug(condition_name_dic)
-        self.model.set_condition_list(condition_name_dic)
 
     def btn_query_condition_clicked(self, condition):
         logger.info(f'btn_query_condition_clicked. {condition.index} {condition.name}')
         self.kiwoom_api.send_condition_async('1111', condition.name, condition.index, 0)
-
-    # KiwoomListener
-    def on_stock_quantity_changed(self, code: str):
-        logger.info(f'on_stock_quantity_changed. code: {code}')
 
 
 if __name__ == "__main__":
@@ -95,7 +88,6 @@ if __name__ == "__main__":
     manager = Manager(model, main_window, kiwoom_api)
 
     main_window.set_listener(manager)
-    kiwoom_api.set_listener(manager)
     kiwoom_api.comm_connect()
 
     main_window.show()

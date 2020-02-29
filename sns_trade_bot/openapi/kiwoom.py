@@ -1,245 +1,39 @@
-import enum
 import os
 import sys
 import logging
 import time
-from abc import abstractmethod
 from datetime import datetime
 
 from PyQt5.QtWidgets import *
-from PyQt5.QAxContainer import *
-from PyQt5.QtCore import *
-from sns_trade_bot.model.model import Model, DataType
-from sns_trade_bot.model.model import Stock
-from sns_trade_bot.model.model import ModelListener
+from sns_trade_bot.model.model import Model, DataType, ModelListener
+from sns_trade_bot.openapi.kiwoom_internal import KiwoomOcx
+from sns_trade_bot.openapi.kiwoom_event import KiwoomEventHandler
 
 logger = logging.getLogger(__name__)
 
 TR_REQ_TIME_INTERVAL = 0.2
 
 
-class ScreenNo(enum.Enum):
-    REAL = '2222'  # 실시간 조회
-    INTEREST = '3333'  # 관심종목 조회
-    BALANCE = '4444'  # 계좌평가현황요청
-    CODE = '5555'  # 주식기본정보요청
-
-
-class RequestName(enum.Enum):
-    MULTI_CODE_QUERY = 'RQ_MULTI_CODE_QUERY'  # 관심종목정보요청 (OPTKWFID)
-    BALANCE = 'RQ_BALANCE'  # 계좌평가현황요청 (OPW00004)
-    CODE_INFO = 'RQ_CODE_INFO'  # 주식기본정보요청 (opt10001)
-
-
-class KiwoomListener:
-    """
-    Notify kiwoom events to Main
-    """
-
-    @abstractmethod
-    def on_stock_quantity_changed(self, code: str):
-        pass
-
-
-class Kiwoom(QAxWidget):
+class Kiwoom:
     model: Model
-    listener: KiwoomListener
-    login_event_loop = None
-    tr_event_loop = None
-    temp_event_loop = None
+    ocx: KiwoomOcx
+    handler: KiwoomEventHandler
 
     def __init__(self, the_model):
         super().__init__()
         self.model = the_model
-        self.setControl("KHOPENAPI.KHOpenAPICtrl.1")
-        self.OnEventConnect.connect(self._event_connect)
-        self.OnReceiveTrCondition.connect(self._on_receive_tr_condition)
-        self.OnReceiveConditionVer.connect(self._on_receive_condition_ver)
-        self.OnReceiveTrData.connect(self._on_receive_tr_data)
-        self.OnReceiveRealData.connect(self._on_receive_real_data)
-
-    def set_listener(self, the_listener):
-        self.listener = the_listener
+        self.ocx = KiwoomOcx(self.model)
+        self.handler = KiwoomEventHandler(self.model, self.ocx)
+        self.ocx.set_event_handler(self.handler)
 
     def comm_connect(self):
-        self.dynamicCall("CommConnect()")
-        self.login_event_loop = QEventLoop()
-        self.login_event_loop.exec_()
-
-    def _event_connect(self, err_code):
-        if err_code == 0:
-            logger.info("connected")
-            account_num = self.dynamicCall("GetLoginInfo(QString)", "ACCNO")
-            account_num = account_num[:-1]
-            account_list = account_num.split(";")
-            logger.info("account_list: %s", account_list)
-            self.model.set_account_list(account_list)
-        else:
-            logger.info("disconnected")
-        self.login_event_loop.exit()
-
-    def get_code_list_by_market(self, market):
-        code_list = self.dynamicCall("GetCodeListByMarket(QString)", market)
-        code_list = code_list.split(';')
-        return code_list[:-1]
-
-    def get_condition_name_list(self):
-        condition_name_list_str = self.dynamicCall("GetConditionNameList()")
-        condition_name_list_str = condition_name_list_str[:-1]  # Remove last ';'
-        condition_name_list = condition_name_list_str.split(';')
-        ret_dic = {}
-        for name_with_index in condition_name_list:
-            temp_list = name_with_index.split('^')
-            ret_dic[int(temp_list[0])] = temp_list[1]
-        return ret_dic
+        self.ocx.comm_connect()
 
     def get_master_code_name(self, code):
-        code_name = self.dynamicCall("GetMasterCodeName(QString)", code)
-        return code_name
+        return self.ocx.get_master_code_name(code)
 
     def get_connect_state(self):
-        ret = self.dynamicCall("GetConnectState()")
-        return ret
-
-    def set_input_value(self, item: str, value: str):
-        self.dynamicCall("SetInputValue(QString, QString)", item, value)
-
-    def comm_rq_data(self, rq_name: RequestName, tr_code: str, is_next: int, screen_no: ScreenNo):
-        ret = self.dynamicCall("CommRqData(QString, QString, int, QString)",
-                               [rq_name.value, tr_code, is_next, screen_no.value])
-        logger.info(f'CommRqData(). ret: {ret}')
-        if ret == 0:
-            self.tr_event_loop = QEventLoop()
-            self.tr_event_loop.exec_()
-
-    def _get_comm_real_data(self, code: str, fid: int) -> str:
-        ret = self.dynamicCall("GetCommRealData(QString, int)", code, fid)
-        return ret.strip()
-
-    def _get_comm_data(self, tr_code: str, record_name: str, index: int, item_name: str) -> str:
-        ret = self.dynamicCall("GetCommData(QString, QString, int, QString)",
-                               [tr_code, record_name, index, item_name])
-        return ret.strip()
-
-    def _get_repeat_cnt(self, tr_code: str):
-        target_record = {
-            'OPTKWFID': '관심종목정보',  # 관심종목정보요청
-            'OPW00004': '종목별계좌평가현황',  # 계좌평가현황요청
-        }
-        ret = self.dynamicCall("GetRepeatCnt(QString, QString)", tr_code, target_record[tr_code])
-        return ret
-
-    def _on_receive_tr_data(self, screen_no: str, rq_name: str, tr_code: str, record_name: str, pre_next: str, unused1,
-                            unused2, unused3, unused4):
-        logger.debug(
-            f'screen_no:{screen_no}, rq_name:{rq_name}, tr_code:{tr_code}, record_name:{record_name}, '
-            f'pre_next:{pre_next}, unused1:{unused1}, unused2:{unused2}, unused3:{unused3}, unused4:{unused4}')
-        if pre_next == '2':
-            self.remained_data = True
-        else:
-            self.remained_data = False
-
-        if rq_name == RequestName.MULTI_CODE_QUERY.value:
-            count = self._get_repeat_cnt(tr_code)
-            for i in range(count):
-                code = self._get_comm_data(tr_code, record_name, i, '종목코드')
-                name = self._get_comm_data(tr_code, record_name, i, '종목명')
-                price_str = self._get_comm_data(tr_code, record_name, i, '현재가')
-                price = int(price_str)
-                price = price if price >= 0 else price * (-1)
-                stock = self.model.get_stock(code)
-                stock.name = name
-                stock.cur_price = price
-                logger.info(f'code:{code}, name:{name}, price:{price}')
-            self.disconnect_real_data(ScreenNo.INTEREST)
-            self.model.set_updated(DataType.TABLE_BALANCE)
-        elif rq_name == RequestName.BALANCE.value:
-            account_name = self._get_comm_data(tr_code, record_name, 0, '계좌명')
-            cur_balance_str = self._get_comm_data(tr_code, record_name, 0, '유가잔고평가액')
-            cash_str = self._get_comm_data(tr_code, record_name, 0, '예수금')
-            buy_total_str = self._get_comm_data(tr_code, record_name, 0, '총매입금액')
-            print_count_str = self._get_comm_data(tr_code, record_name, 0, '출력건수')
-            cur_balance = int(cur_balance_str)
-            cash = int(cash_str)
-            buy_total = int(buy_total_str)
-            print_count = int(print_count_str)
-            count = self._get_repeat_cnt(tr_code)
-            logger.info(f'account_name:{account_name}, cur_balance:{cur_balance}, cash:{cash}, buy_total:{buy_total}, '
-                        f'print_count:{print_count}, count:{count}')
-            for i in range(count):
-                code = self._get_comm_data(tr_code, record_name, i, '종목코드')
-                name = self._get_comm_data(tr_code, record_name, i, '종목명')
-                quantity = self._get_comm_data(tr_code, record_name, i, '보유수량')
-                buy_price_str = self._get_comm_data(tr_code, record_name, i, '평균단가')
-                cur_price_str = self._get_comm_data(tr_code, record_name, i, '현재가')
-                earning_rate_str = self._get_comm_data(tr_code, record_name, i, '손익율')
-                logger.debug(f'code:{code}, name:{name}, quantity:{quantity}, buy_price_str:{buy_price_str}, '
-                             f'cur_price_str:{cur_price_str}, earning_rate_str:{earning_rate_str}')
-                buy_price = int(buy_price_str)
-                cur_price = int(cur_price_str)
-                cur_price = cur_price if cur_price >= 0 else cur_price * (-1)
-                earning_rate = float(earning_rate_str) / 100
-                stock = self.model.get_stock(code)
-                stock.name = name
-                stock.cur_price = cur_price
-                stock.quantity = quantity
-                stock.buy_price = buy_price
-                logger.info(f'code:{code}, name:{name}, quantity:{quantity}, buy_price:{buy_price}, '
-                            f'cur_price:{cur_price}, earning_rate:{earning_rate}')
-            self.model.set_updated(DataType.TABLE_BALANCE)
-        elif rq_name == RequestName.CODE_INFO.value:
-            code = self._get_comm_data(tr_code, record_name, 0, '종목코드').strip()
-            name = self._get_comm_data(tr_code, record_name, 0, '종목명').strip()
-            price_str = self._get_comm_data(tr_code, record_name, 0, '현재가').strip()
-            if code and name and price_str:
-                price = int(price_str)
-                price = price if price >= 0 else price * (-1)
-                stock = self.model.get_stock(code)
-                stock.name = name
-                stock.cur_price = price
-                logger.info(f'code:{code}, name:{name}, price:{price}')
-                self.model.set_updated(DataType.TABLE_BALANCE)
-            else:
-                logger.error("error!!")
-        try:
-            self.tr_event_loop.exit()
-        except AttributeError:
-            pass
-
-    def _on_receive_real_data(self, code: str, real_type: str, real_data: str):
-        logger.debug(f"code:{code} real_type:{real_type} real_data:{real_data}")
-        if real_type == '장시작시간':
-            # TODO: Trigger time related strategy
-            pass
-        elif real_type == '주식체결':
-            price_str = self._get_comm_real_data(code, 10)
-            cur_price = int(price_str)
-            cur_price = cur_price if cur_price >= 0 else cur_price * (-1)
-            stock = self.model.get_stock(code)
-            stock.cur_price = cur_price
-            for strategy in stock.sell_strategy_dic.values():
-                strategy.on_price_updated()
-            for strategy in stock.buy_strategy_dic.values():
-                strategy.on_price_updated()
-
-    def send_order(self, rqname, screen_no, acc_no, order_type, code, quantity, price, hoga, order_no):
-        self.dynamicCall("SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
-                         [rqname, screen_no, acc_no, order_type, code, quantity, price, hoga, order_no])
-
-    def get_chejan_data(self, fid):
-        ret = self.dynamicCall("GetChejanData(int)", fid)
-        return ret
-
-    def _receive_chejan_data(self, gubun, item_cnt, fid_list):
-        logger.info(f'gubun:{gubun}, item_cnt:{item_cnt}, fid_list:{fid_list}')
-        logger.info(self.get_chejan_data(9203))
-        logger.info(self.get_chejan_data(302))
-        logger.info(self.get_chejan_data(900))
-        logger.info(self.get_chejan_data(901))
-
-    def get_login_info(self, tag):
-        ret = self.dynamicCall("GetLoginInfo(QString)", tag)
-        return ret
+        return self.get_connect_state()
 
     def get_condition_load_async(self):
         """HTS 에 저장된 condition 불러옴
@@ -247,15 +41,7 @@ class Kiwoom(QAxWidget):
         :return: 1(성공)
         :callback: _on_receive_condition_ver()
         """
-        ret = self.dynamicCall("GetConditionLoad()")
-        logger.debug("ret: %d", ret)
-        self.temp_event_loop = QEventLoop()
-        self.temp_event_loop.exec_()
-        return ret
-
-    def _on_receive_condition_ver(self, ret: int, msg: str):
-        logger.debug(f'ret: {ret}, msg: {msg}')  # ret: 사용자 조건식 저장 성공여부 (1: 성공, 나머지 실패)
-        self.temp_event_loop.exit()
+        return self.ocx.get_condition_load_async()
 
     def send_condition_async(self, screen_num: str, condition_name: str, condition_index: int, query_type: int):
         """ condition 만족하는 종목 조회 or 실시간 등록
@@ -267,78 +53,22 @@ class Kiwoom(QAxWidget):
         :return: 성공 1, 실패 0
         :callback: _on_receive_tr_condition()
         """
-        ret = self.dynamicCall("SendCondition(QString, QString, int, int)", screen_num, condition_name, condition_index,
-                               query_type)
-        if ret != 1:
-            logger.error('ret: {ret}')
-        return ret
-
-    def _on_receive_tr_condition(self, scr_no, str_code_list, str_condition_name, index, has_next):
-        logger.debug(f'{scr_no} {str_code_list} {str_condition_name} {index} {has_next}')
-        code_list_str = str_code_list[:-1]  # 마지막 ";" 제거
-        code_list = code_list_str.split(';')
-        logger.debug("code_list: %s", code_list)
-        temp_stock_list = []
-        for code in code_list:
-            name = self.get_master_code_name([code])
-            temp_stock_list.append(Stock(code, name))
-            logger.debug("code: %s, name: %s", code, name)
-        self.model.set_temp_stock_list(temp_stock_list)
+        return self.ocx.send_condition_async(screen_num, condition_name, condition_index, query_type)
 
     def comm_kw_rq_data_async(self, the_code_list: list):
         """ 복수종목조회 Tran 을 서버로 송신한다
         :callback: _on_receive_tr_data()
         """
-        logger.debug(f'comm_kw_rq_data() {the_code_list}')
-        count = len(the_code_list)
-        if count == 0:
-            logger.error('code_list is empty!!')
-            return -1
-        code_list_str = ";".join(the_code_list)  # 종목리스트
-        is_next = 0  # 연속조회요청 여부
-        code_count = count  # 종목개수
-        type_flag = 0  # 조회구분 (0: 주식관심종목정보 , 선물옵션관심종목정보)
-        rq_name = RequestName.MULTI_CODE_QUERY.value  # 사용자구분 명
-        screen_no = ScreenNo.INTEREST.value  # 화면변허
-        ret = self.dynamicCall("CommKwRqData(QString, int, int, int, QString, QString)",
-                               [code_list_str, is_next, code_count, type_flag, rq_name, screen_no])
-        logger.info(f'CommKwRqData(). ret: {ret}')  # 0: 정상처리
-        return ret
+        self.ocx.comm_kw_rq_data_async(the_code_list)
 
     def set_real_reg(self, the_code_list: list):
-        logger.debug(f'set_real_reg() {the_code_list}')
-        code_list_str = ';'.join(the_code_list)
-        fid = "9001;10;13"  # 종목코드,업종코드;현재가;누적거래량
-        ret = self.dynamicCall("SetRealReg(QString, QString, QString, QString)",
-                               [ScreenNo.REAL.value, code_list_str, fid, "1"])  # "1" 종목 추가, "0" 기존 종목은 제외
-        logger.info(f'call set_real_reg(). ret: {ret}')
-        return ret
-
-    def set_real_remove(self, the_code):
-        logger.info("the_code %s", the_code)
-        ret = self.dynamicCall("SetRealRemove(QString, QString)", [ScreenNo.REAL.value, the_code])
-        logger.info(f'SetRealRemove(). ret: {ret}')
-
-    def disconnect_real_data(self, screen_no: ScreenNo):
-        ret = self.dynamicCall("DisconnectRealData(QString)", [screen_no.value])
-        logger.info(f'DisconnectRealData(). ret: {ret}')
+        self.ocx.set_real_reg(the_code_list)
 
     def request_account_detail(self):
-        logger.info(f'account: {self.model.account}')
-        self.set_input_value('계좌번호', self.model.account)
-        self.set_input_value('비밀번호', '')  # 사용안함(공백)
-        self.set_input_value('상장폐지조회구분', '0')  # 0:전체, 1: 상장폐지종목제외
-        self.set_input_value('비밀번호입력매체구분', '00')  # 고정값?
-        tr_code = 'OPW00004'  # 계좌평가현황요청
-        is_next = 0  # 연속조회요청 여부 (0:조회 , 2:연속)
-        self.comm_rq_data(RequestName.BALANCE, tr_code, is_next, ScreenNo.BALANCE)
+        self.ocx.request_account_detail()
 
     def request_code_info(self, the_code):
-        logger.info(f'code: {the_code}')
-        self.set_input_value('종목코드', the_code)
-        tr_code = 'opt10001'  # 주식기본정보요청
-        is_next = 0
-        self.comm_rq_data(RequestName.CODE_INFO, tr_code, is_next, ScreenNo.CODE)
+        self.ocx.request_code_info(the_code)
 
 
 if __name__ == "__main__":
@@ -357,11 +87,6 @@ if __name__ == "__main__":
     logger.addHandler(stream_handler)
 
 
-    class TempKiwoomListener(KiwoomListener):
-        def on_stock_quantity_changed(self, code):
-            logger.info(f'on_stock_quantity_changed. code: {code}')
-
-
     class TempModelListener(ModelListener):
         def on_data_updated(self, data_type: DataType):
             logger.info(f"on_data_updated. {data_type}")
@@ -369,12 +94,10 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     tempWindow = QMainWindow()
-    tempManager = TempKiwoomListener()
     tempModelListener = TempModelListener()
     model = Model()
     model.set_listener(tempModelListener)
     kiwoom_api = Kiwoom(model)
-    kiwoom_api.set_listener(tempManager)
 
     kiwoom_api.comm_connect()
 
