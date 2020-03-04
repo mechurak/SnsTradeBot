@@ -90,7 +90,7 @@ if __name__ == "__main__":
     class TempModelListener(ModelListener):
         def on_data_updated(self, data_type: DataType):
             logger.info(f"on_data_updated. {data_type}")
-
+            event_loop.exit()
 
     app = QApplication(sys.argv)
     tempWindow = QMainWindow()
@@ -99,20 +99,25 @@ if __name__ == "__main__":
     model.set_listener(tempModelListener)
     kiwoom_api = Kiwoom(model)
 
+    from PyQt5.QtCore import QEventLoop
+    event_loop = QEventLoop()
+
     kiwoom_api.comm_connect()
+    event_loop.exec_()
 
     kiwoom_api.get_condition_load_async()
-    condition_name_dic = kiwoom_api.get_condition_name_list()
-    logger.debug(condition_name_dic)
+    event_loop.exec_()
 
+    condition_name_dic = model.get_condition_name_dic()
     kiwoom_api.send_condition_async('1111', condition_name_dic[1], 1, 0)
+    event_loop.exec_()
 
     input_code_list = ['004540', '005360', '053110']
     kiwoom_api.comm_kw_rq_data_async(input_code_list)
-
-    time.sleep(1)
+    event_loop.exec_()
 
     kiwoom_api.set_real_reg(input_code_list)
 
-    tempWindow.show()
-    sys.exit(app.exec_())
+    time.sleep(2)
+    logger.info('test done!')
+    app.exit(0)

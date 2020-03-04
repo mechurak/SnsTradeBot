@@ -197,6 +197,12 @@ class Model:
         if self.listener:
             self.listener.on_data_updated(DataType.TABLE_CONDITION)
 
+    def get_condition_name_dic(self):
+        ret_dic = {}
+        for condition in self.condition_list:
+            ret_dic[condition.index] = condition.name
+        return ret_dic
+
     def set_temp_stock_list(self, temp_stock_list: list):
         self.temp_stock_list = temp_stock_list
         if self.listener:

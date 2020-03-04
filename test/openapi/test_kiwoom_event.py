@@ -4,9 +4,8 @@ import unittest
 from unittest.mock import Mock
 
 from PyQt5.QtWidgets import *
-from PyQt5.QAxContainer import *
-from PyQt5.QtCore import *
-from sns_trade_bot.openapi.kiwoom import Kiwoom, KiwoomListener, ScreenNo, RequestName
+from sns_trade_bot.openapi.kiwoom import Kiwoom
+from sns_trade_bot.openapi.kiwoom_common import ScreenNo, RequestName
 from sns_trade_bot.model.model import Model, ModelListener, DataType
 
 logger = logging.getLogger()
@@ -15,11 +14,6 @@ stream_handler = logging.StreamHandler(sys.stdout)
 formatter = logging.Formatter('%(asctime)s [%(levelname)s|%(filename)s:%(lineno)s(%(funcName)s)] %(message)s')
 stream_handler.setFormatter(formatter)
 logger.addHandler(stream_handler)
-
-
-class TempKiwoomListener(KiwoomListener):
-    def on_stock_quantity_changed(self, code):
-        logger.info(f'on_stock_quantity_changed. code: {code}')
 
 
 class TempModelListener(ModelListener):
@@ -32,12 +26,10 @@ class TestKiwoom(unittest.TestCase):
         logger.info('setup')
         self.app = QApplication(sys.argv)
         self.tempWindow = QMainWindow()
-        self.tempManager = TempKiwoomListener()
         self.tempModelListener = TempModelListener()
         self.model = Model()
         self.model.set_listener(self.tempModelListener)
         self.kiwoom_api = Kiwoom(self.model)
-        self.kiwoom_api.set_listener(self.tempManager)
 
     def tearDown(self):
         logger.info('tearDown')
@@ -54,11 +46,11 @@ class TestKiwoom(unittest.TestCase):
             }
             return mock_dic[item_name]
 
-        self.kiwoom_api._get_comm_data = Mock(side_effect=temp_get_comm_data)
+        self.kiwoom_api.ocx.get_comm_data = Mock(side_effect=temp_get_comm_data)
 
         # when
-        self.kiwoom_api._on_receive_tr_data(ScreenNo.CODE.value, RequestName.CODE_INFO.value, 'opt10001', '', '0', '',
-                                            '', '', '')
+        self.kiwoom_api.handler.on_receive_tr_data(ScreenNo.CODE.value, RequestName.CODE_INFO.value, 'opt10001', '',
+                                                   '0', '', '', '', '')
 
         # then
         self.assertIsNotNone(self.model.stock_dic['23333'])
@@ -107,12 +99,12 @@ class TestKiwoom(unittest.TestCase):
             ]
             return mock_dic_list[index][item_name]
 
-        self.kiwoom_api._get_comm_data = Mock(side_effect=temp_get_comm_data)
-        self.kiwoom_api._get_repeat_cnt = Mock(return_value=2)
+        self.kiwoom_api.ocx.get_comm_data = Mock(side_effect=temp_get_comm_data)
+        self.kiwoom_api.ocx.get_repeat_cnt = Mock(return_value=2)
 
         # when
-        self.kiwoom_api._on_receive_tr_data(ScreenNo.BALANCE.value, RequestName.BALANCE.value, 'OPW00004', '', '0', '',
-                                            '', '', '')
+        self.kiwoom_api.handler.on_receive_tr_data(ScreenNo.BALANCE.value, RequestName.BALANCE.value, 'OPW00004', '',
+                                                   '0', '', '', '', '')
 
         # then
         self.assertIsNotNone(self.model.stock_dic['005930'])
