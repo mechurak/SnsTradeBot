@@ -50,35 +50,40 @@ class KiwoomEventHandler(EventHandler):
             account_name = self.ocx.get_comm_data(tr_code, record_name, 0, '계좌명')
             cur_balance_str = self.ocx.get_comm_data(tr_code, record_name, 0, '유가잔고평가액')
             cash_str = self.ocx.get_comm_data(tr_code, record_name, 0, '예수금')
+            cash2_str = self.ocx.get_comm_data(tr_code, record_name, 0, 'D+2추정예수금')
             buy_total_str = self.ocx.get_comm_data(tr_code, record_name, 0, '총매입금액')
             print_count_str = self.ocx.get_comm_data(tr_code, record_name, 0, '출력건수')
             cur_balance = int(cur_balance_str)
             cash = int(cash_str)
+            cash2 = int(cash2_str)
             buy_total = int(buy_total_str)
             print_count = int(print_count_str)
             count = self.ocx.get_repeat_cnt(tr_code)
-            logger.info(f'account_name:{account_name}, cur_balance:{cur_balance}, cash:{cash}, buy_total:{buy_total}, '
-                        f'print_count:{print_count}, count:{count}')
+            logger.info(f'account_name:{account_name}, cur_balance:{cur_balance}, cash:{cash}, cash2:{cash2}, '
+                        f'buy_total:{buy_total}, print_count:{print_count}, count:{count}')
             for i in range(count):
-                code = self.ocx.get_comm_data(tr_code, record_name, i, '종목코드')
-                name = self.ocx.get_comm_data(tr_code, record_name, i, '종목명')
-                quantity = self.ocx.get_comm_data(tr_code, record_name, i, '보유수량')
-                buy_price_str = self.ocx.get_comm_data(tr_code, record_name, i, '평균단가')
-                cur_price_str = self.ocx.get_comm_data(tr_code, record_name, i, '현재가')
-                earning_rate_str = self.ocx.get_comm_data(tr_code, record_name, i, '손익율')
-                logger.debug(f'code:{code}, name:{name}, quantity:{quantity}, buy_price_str:{buy_price_str}, '
-                             f'cur_price_str:{cur_price_str}, earning_rate_str:{earning_rate_str}')
+                code_raw = self.ocx.get_comm_data(tr_code, record_name, i, '종목코드')  # A096530
+                name = self.ocx.get_comm_data(tr_code, record_name, i, '종목명')  # 씨젠
+                quantity_str = self.ocx.get_comm_data(tr_code, record_name, i, '보유수량')  # 000000000010
+                buy_price_str = self.ocx.get_comm_data(tr_code, record_name, i, '평균단가')  # 000000037650
+                cur_price_str = self.ocx.get_comm_data(tr_code, record_name, i, '현재가')  # 000000037200
+                earning_rate_str = self.ocx.get_comm_data(tr_code, record_name, i, '손익율')  # -00000014688
+                logger.debug(
+                    f'code_raw:{code_raw}, name:{name}, quantity_str:{quantity_str}, buy_price_str:{buy_price_str}, '
+                    f'cur_price_str:{cur_price_str}, earning_rate_str:{earning_rate_str}')
+                code = code_raw[1:]  # Remove 'A'
+                quantity = int(quantity_str)
                 buy_price = int(buy_price_str)
                 cur_price = int(cur_price_str)
-                cur_price = cur_price if cur_price >= 0 else cur_price * (-1)
-                earning_rate = float(earning_rate_str) / 100
+                earning_rate = float(earning_rate_str) / 10000
+                logger.info(f'code:{code}, name:{name}, quantity:{quantity}, buy_price:{buy_price}, '
+                            f'cur_price:{cur_price}, earning_rate:{earning_rate}')
                 stock = self.model.get_stock(code)
                 stock.name = name
                 stock.cur_price = cur_price
                 stock.quantity = quantity
                 stock.buy_price = buy_price
-                logger.info(f'code:{code}, name:{name}, quantity:{quantity}, buy_price:{buy_price}, '
-                            f'cur_price:{cur_price}, earning_rate:{earning_rate}')
+                stock.earning_rate = earning_rate
             self.model.set_updated(DataType.TABLE_BALANCE)
         elif rq_name == RequestName.CODE_INFO.value:
             code = self.ocx.get_comm_data(tr_code, record_name, 0, '종목코드').strip()

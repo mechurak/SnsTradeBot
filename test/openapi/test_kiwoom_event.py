@@ -80,21 +80,21 @@ class TestKiwoom(unittest.TestCase):
                     '당일손익율': '000000000000',
                     '당월손익율': '000000000000',
                     '누적손익율': '000000000000',
-                    '출력건수': '0002',  # TODO: Check real data
+                    '출력건수': '0002',
                     # 멀티데이터
-                    '종목코드': '005930',
+                    '종목코드': 'A005930',
                     '종목명': '삼성전자',
                     '보유수량': '2',
                     '평균단가': '55900',
-                    '현재가': '-54200',
-                    '손익율': '-3.04'
+                    '현재가': '54200',
+                    '손익율': '-30400'
                 }, {
-                    '종목코드': '180640',
-                    '종목명': '한진칼',
-                    '보유수량': '2',
-                    '평균단가': '65000',
-                    '현재가': '67200',
-                    '손익율': '3.38'
+                    '종목코드': 'A096530',
+                    '종목명': '씨젠',
+                    '보유수량': '000000000010',
+                    '평균단가': '000000037650',
+                    '현재가': '000000037200',
+                    '손익율': '-00000014688'
                 }
             ]
             return mock_dic_list[index][item_name]
@@ -109,6 +109,10 @@ class TestKiwoom(unittest.TestCase):
         # then
         self.assertIsNotNone(self.model.stock_dic['005930'])
         self.assertEqual(self.model.stock_dic['005930'].cur_price, 54200)
+        self.assertEqual(self.model.stock_dic['005930'].earning_rate, -3.04)
+        self.assertIsNotNone(self.model.stock_dic['096530'])
+        self.assertEqual(self.model.stock_dic['096530'].cur_price, 37200)
+        self.assertEqual(self.model.stock_dic['096530'].earning_rate, -1.4688)
 
 
 if __name__ == '__main__':

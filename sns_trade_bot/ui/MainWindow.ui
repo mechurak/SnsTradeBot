@@ -105,8 +105,8 @@
       <rect>
        <x>10</x>
        <y>200</y>
-       <width>188</width>
-       <height>25</height>
+       <width>233</width>
+       <height>30</height>
       </rect>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout">
@@ -178,13 +178,13 @@
      <column/>
      <column/>
     </widget>
-    <widget class="QWidget" name="">
+    <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>20</x>
        <y>270</y>
        <width>181</width>
-       <height>25</height>
+       <height>30</height>
       </rect>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="2,1">
@@ -207,23 +207,16 @@
       </item>
      </layout>
     </widget>
-    <widget class="QWidget" name="">
+    <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>297</x>
        <y>270</y>
        <width>361</width>
-       <height>25</height>
+       <height>30</height>
       </rect>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_5">
-      <item>
-       <widget class="QPushButton" name="btn_balance">
-        <property name="text">
-         <string>보유 종목 조회</string>
-        </property>
-       </widget>
-      </item>
       <item>
        <widget class="QPushButton" name="btn_interest_balance">
         <property name="text">
@@ -234,7 +227,7 @@
       <item>
        <widget class="QPushButton" name="btn_real">
         <property name="text">
-         <string>실시간 등록</string>
+         <string>전체 실시간 등록</string>
         </property>
        </widget>
       </item>
@@ -253,13 +246,13 @@
     <property name="title">
      <string>System</string>
     </property>
-    <widget class="QWidget" name="">
+    <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>40</x>
        <y>20</y>
-       <width>239</width>
-       <height>25</height>
+       <width>295</width>
+       <height>30</height>
       </rect>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -287,18 +280,30 @@
      </layout>
     </widget>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>20</x>
       <y>20</y>
-      <width>181</width>
-      <height>22</height>
+      <width>331</width>
+      <height>30</height>
      </rect>
     </property>
-    <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,2">
+    <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,0,0">
      <item>
       <widget class="QLabel" name="label_2">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>70</width>
+         <height>16777215</height>
+        </size>
+       </property>
        <property name="text">
         <string>계좌번호</string>
        </property>
@@ -314,6 +319,13 @@
        </property>
       </widget>
      </item>
+     <item>
+      <widget class="QPushButton" name="btn_balance">
+       <property name="text">
+        <string>보유 종목 조회</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </widget>
   </widget>
@@ -324,7 +336,7 @@
      <x>0</x>
      <y>0</y>
      <width>855</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>
