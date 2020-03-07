@@ -138,7 +138,7 @@ class KiwoomEventHandler(EventHandler):
         temp_stock_list = []
         for code in code_list:
             name = self.ocx.get_master_code_name([code])
-            temp_stock_list.append(Stock(code, name))
+            temp_stock_list.append(Stock(self.model.order_queue, code, name))
             logger.debug("code: %s, name: %s", code, name)
         self.model.set_temp_stock_list(temp_stock_list)
 

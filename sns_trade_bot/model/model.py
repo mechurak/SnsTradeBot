@@ -2,13 +2,15 @@ import enum
 import logging
 import os
 import json
+import queue
 from abc import abstractmethod
 
 logger = logging.getLogger(__name__)
 
 
 class Stock:
-    def __init__(self, the_code: str, the_name: str = 'UNDEFINED', the_cur_price: int = 0):
+    def __init__(self, the_order_queue: queue.Queue, the_code: str, the_name: str = 'UNDEFINED', the_cur_price: int = 0):
+        self.order_queue = the_order_queue
         self.code = the_code  # 종목코드
         self.name = the_name  # 종목명
         self.cur_price = the_cur_price  # 현재가
@@ -60,15 +62,25 @@ class Stock:
         else:
             logger.error(f'unknown sell strategy "{the_strategy_name}" for "{self.name}"')
 
-    def on_buy_signal(self, the_strategy, the_order_quantity):
-        logger.info("buy_signal!! for %s. the_strategy: %s, the_order_quantity: %d", self.name, the_strategy.name,
+    def on_buy_signal(self, the_strategy_name: str, the_order_quantity: int):
+        logger.info("buy_signal!! for %s. the_strategy: %s, the_order_quantity: %d", self.name, the_strategy_name,
                     the_order_quantity)
-        pass
+        queue_item = OrderQueueItem()
+        queue_item.type = OrderType.BUY
+        queue_item.code = self.code
+        queue_item.quantity = the_order_quantity
+        queue_item.strategy_name = the_strategy_name
+        self.order_queue.put(queue_item)
 
-    def on_sell_signal(self, the_strategy, the_order_quantity):
-        logger.info("sell_signal!! for %s. the_strategy: %s, the_order_quantity: %d", self.name, the_strategy.name,
+    def on_sell_signal(self, the_strategy_name: str, the_order_quantity: int):
+        logger.info("sell_signal!! for %s. the_strategy: %s, the_order_quantity: %d", self.name, the_strategy_name,
                     the_order_quantity)
-        pass
+        queue_item = OrderQueueItem()
+        queue_item.type = OrderType.SELL
+        queue_item.code = self.code
+        queue_item.quantity = the_order_quantity
+        queue_item.strategy_name = the_strategy_name
+        self.order_queue.put(queue_item)
 
 
 class Condition:
@@ -99,8 +111,23 @@ class ModelListener:
         pass
 
 
+class OrderType(enum.Enum):
+    UNDEFINED = 0
+    BUY = 1
+    SELL = 2
+
+
+class OrderQueueItem:
+    type: OrderType
+    code: str
+    quantity: int
+    strategy_name: str
+
+
 class Model:
     SAVE_FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../my_stock_list.json')
+
+    order_queue: queue.Queue
 
     def __init__(self):
         self.account = '1234'
@@ -109,6 +136,7 @@ class Model:
         self.stock_dic = {}
         self.temp_stock_list = []
         self.listener = None
+        self.order_queue = queue.Queue()
 
     def __str__(self):
         ret_str = '====== UserData =======\n'
@@ -154,9 +182,9 @@ class Model:
         if self.listener:
             self.listener.on_data_updated(DataType.TABLE_BALANCE)
 
-    def get_stock(self, the_code):
+    def get_stock(self, the_code) -> Stock:
         if the_code not in self.stock_dic:
-            self.stock_dic[the_code] = Stock(the_code)
+            self.stock_dic[the_code] = Stock(self.order_queue, the_code)
             logger.debug("new code '%s'. create new stock", the_code)
         return self.stock_dic[the_code]
 

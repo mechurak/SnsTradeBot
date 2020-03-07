@@ -1,17 +1,27 @@
 import os
+import queue
 import sys
 import logging
+import threading
 import time
 from datetime import datetime
 
 from PyQt5.QtWidgets import *
-from sns_trade_bot.model.model import Model, DataType, ModelListener
+from sns_trade_bot.model.model import Model, DataType, ModelListener, OrderQueueItem, OrderType
 from sns_trade_bot.openapi.kiwoom_internal import KiwoomOcx
 from sns_trade_bot.openapi.kiwoom_event import KiwoomEventHandler
 
 logger = logging.getLogger(__name__)
 
-TR_REQ_TIME_INTERVAL = 0.2
+
+class Job:
+    def __init__(self, fn, *args, **kwargs):
+        self.fn = fn
+        self.args = args
+        self.kwargs = kwargs
+
+    def __call__(self):
+        return self.fn(*self.args, **self.kwargs)
 
 
 class Kiwoom:
@@ -25,6 +35,34 @@ class Kiwoom:
         self.ocx = KiwoomOcx(self.model)
         self.handler = KiwoomEventHandler(self.model, self.ocx)
         self.ocx.set_event_handler(self.handler)
+
+        self.job_queue = queue.Queue()
+        t = threading.Thread(target=self.basic_worker)
+        t.daemon = True
+        t.start()
+
+    def basic_worker(self):
+        while True:
+            # Check order_queue
+            while not self.model.order_queue.empty():
+                logger.info('checking order_queue item')
+                item: OrderQueueItem = self.model.order_queue.get()
+                if item.type == OrderType.BUY:
+                    job = Job(self.buy_order, item.code, item.quantity)
+                    self.job_queue.put(job)
+                    logger.info('put buy_order')
+                elif item.type == OrderType.SELL:
+                    job = Job(self.sell_order, item.code, item.quantity)
+                    self.job_queue.put(job)
+                    logger.info('put sell_order')
+                else:
+                    logger.error(f'unexpected item!!! {item.type} {item.code} {item.quantity} {item.strategy_name}')
+                self.model.order_queue.task_done()
+            if not self.job_queue.empty():
+                f = self.job_queue.get()
+                f()
+                time.sleep(0.2)
+            time.sleep(0.1)
 
     def comm_connect(self):
         self.ocx.comm_connect()
@@ -69,6 +107,12 @@ class Kiwoom:
 
     def request_code_info(self, the_code):
         self.ocx.request_code_info(the_code)
+
+    def buy_order(self, the_code, the_quantity):
+        logger.info(f'buy_order(). the_code:{the_code}, the_quantity:{the_quantity}')
+
+    def sell_order(self, the_code, the_quantity):
+        logger.info(f'sell_order(). the_code:{the_code}, the_quantity:{the_quantity}')
 
 
 if __name__ == "__main__":

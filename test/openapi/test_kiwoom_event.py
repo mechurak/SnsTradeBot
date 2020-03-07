@@ -44,7 +44,7 @@ class TestKiwoom(unittest.TestCase):
                 '종목명': '테스트종목',
                 '현재가': '-21000'
             }
-            return mock_dic[item_name]
+            return mock_dic[item_name] if item_name in mock_dic.keys() else ''
 
         self.kiwoom_api.ocx.get_comm_data = Mock(side_effect=temp_get_comm_data)
 
@@ -97,7 +97,7 @@ class TestKiwoom(unittest.TestCase):
                     '손익율': '-00000014688'
                 }
             ]
-            return mock_dic_list[index][item_name]
+            return mock_dic_list[index][item_name] if item_name in mock_dic_list[index].keys() else ''
 
         self.kiwoom_api.ocx.get_comm_data = Mock(side_effect=temp_get_comm_data)
         self.kiwoom_api.ocx.get_repeat_cnt = Mock(return_value=2)
