@@ -5,7 +5,7 @@ from unittest.mock import Mock
 
 from PyQt5.QtWidgets import *
 from sns_trade_bot.openapi.kiwoom import Kiwoom
-from sns_trade_bot.openapi.kiwoom_common import ScreenNo, RequestName
+from sns_trade_bot.openapi.kiwoom_common import ScreenNo, RqName
 from sns_trade_bot.model.model import Model, ModelListener, DataType
 
 logger = logging.getLogger()
@@ -49,7 +49,7 @@ class TestKiwoom(unittest.TestCase):
         self.kiwoom_api.ocx.get_comm_data = Mock(side_effect=temp_get_comm_data)
 
         # when
-        self.kiwoom_api.handler.on_receive_tr_data(ScreenNo.CODE.value, RequestName.CODE_INFO.value, 'opt10001', '',
+        self.kiwoom_api.handler.on_receive_tr_data(ScreenNo.CODE.value, RqName.CODE_INFO.value, 'opt10001', '',
                                                    '0', '', '', '', '')
 
         # then
@@ -103,7 +103,7 @@ class TestKiwoom(unittest.TestCase):
         self.kiwoom_api.ocx.get_repeat_cnt = Mock(return_value=2)
 
         # when
-        self.kiwoom_api.handler.on_receive_tr_data(ScreenNo.BALANCE.value, RequestName.BALANCE.value, 'OPW00004', '',
+        self.kiwoom_api.handler.on_receive_tr_data(ScreenNo.BALANCE.value, RqName.BALANCE.value, 'OPW00004', '',
                                                    '0', '', '', '', '')
 
         # then

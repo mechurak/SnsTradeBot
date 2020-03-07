@@ -2,7 +2,7 @@ import logging
 
 from PyQt5.QAxContainer import *
 from sns_trade_bot.model.model import Model
-from sns_trade_bot.openapi.kiwoom_common import ScreenNo, RequestName, EventHandler
+from sns_trade_bot.openapi.kiwoom_common import ScreenNo, RqName, EventHandler
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ class KiwoomOcx(QAxWidget):
     def set_input_value(self, item: str, value: str):
         self.dynamicCall("SetInputValue(QString, QString)", item, value)
 
-    def comm_rq_data(self, rq_name: RequestName, tr_code: str, is_next: int, screen_no: ScreenNo):
+    def comm_rq_data(self, rq_name: RqName, tr_code: str, is_next: int, screen_no: ScreenNo):
         ret = self.dynamicCall("CommRqData(QString, QString, int, QString)",
                                [rq_name.value, tr_code, is_next, screen_no.value])
         logger.info(f'CommRqData(). ret: {ret}')
@@ -124,7 +124,7 @@ class KiwoomOcx(QAxWidget):
         is_next = 0  # 연속조회요청 여부
         code_count = count  # 종목개수
         type_flag = 0  # 조회구분 (0: 주식관심종목정보 , 선물옵션관심종목정보)
-        rq_name = RequestName.MULTI_CODE_QUERY.value  # 사용자구분 명
+        rq_name = RqName.INTEREST_CODE.value  # 사용자구분 명
         screen_no = ScreenNo.INTEREST.value  # 화면변허
         ret = self.dynamicCall("CommKwRqData(QString, int, int, int, QString, QString)",
                                [code_list_str, is_next, code_count, type_flag, rq_name, screen_no])
@@ -157,11 +157,11 @@ class KiwoomOcx(QAxWidget):
         self.set_input_value('비밀번호입력매체구분', '00')  # 고정값?
         tr_code = 'OPW00004'  # 계좌평가현황요청
         is_next = 0  # 연속조회요청 여부 (0:조회 , 2:연속)
-        self.comm_rq_data(RequestName.BALANCE, tr_code, is_next, ScreenNo.BALANCE)
+        self.comm_rq_data(RqName.BALANCE, tr_code, is_next, ScreenNo.BALANCE)
 
     def request_code_info(self, the_code):
         logger.info(f'code: {the_code}')
         self.set_input_value('종목코드', the_code)
         tr_code = 'opt10001'  # 주식기본정보요청
         is_next = 0
-        self.comm_rq_data(RequestName.CODE_INFO, tr_code, is_next, ScreenNo.CODE)
+        self.comm_rq_data(RqName.CODE_INFO, tr_code, is_next, ScreenNo.CODE)

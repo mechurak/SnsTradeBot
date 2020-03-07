@@ -1,7 +1,7 @@
 import logging
 
 from sns_trade_bot.model.model import Model, DataType, Stock
-from sns_trade_bot.openapi.kiwoom_common import ScreenNo, RequestName, EventHandler
+from sns_trade_bot.openapi.kiwoom_common import ScreenNo, RqName, EventHandler, TrResultKey
 from sns_trade_bot.openapi.kiwoom_internal import KiwoomOcx
 
 logger = logging.getLogger(__name__)
@@ -32,9 +32,10 @@ class KiwoomEventHandler(EventHandler):
             f'screen_no:{screen_no}, rq_name:{rq_name}, tr_code:{tr_code}, record_name:{record_name}, '
             f'pre_next:{pre_next}, unused1:{unused1}, unused2:{unused2}, unused3:{unused3}, unused4:{unused4}')
 
-        if rq_name == RequestName.MULTI_CODE_QUERY.value:
+        if rq_name == RqName.INTEREST_CODE.value:
             count = self.ocx.get_repeat_cnt(tr_code)
             for i in range(count):
+                self.print_tr_data(tr_code, record_name, i, TrResultKey.INTEREST_CODE_MULTI)
                 code = self.ocx.get_comm_data(tr_code, record_name, i, '종목코드')
                 name = self.ocx.get_comm_data(tr_code, record_name, i, '종목명')
                 price_str = self.ocx.get_comm_data(tr_code, record_name, i, '현재가')
@@ -46,7 +47,8 @@ class KiwoomEventHandler(EventHandler):
                 logger.info(f'code:{code}, name:{name}, price:{price}')
             self.ocx.disconnect_real_data(ScreenNo.INTEREST)
             self.model.set_updated(DataType.TABLE_BALANCE)
-        elif rq_name == RequestName.BALANCE.value:
+        elif rq_name == RqName.BALANCE.value:
+            self.print_tr_data(tr_code, record_name, 0, TrResultKey.BALANCE_SINGLE)
             account_name = self.ocx.get_comm_data(tr_code, record_name, 0, '계좌명')
             cur_balance_str = self.ocx.get_comm_data(tr_code, record_name, 0, '유가잔고평가액')
             cash_str = self.ocx.get_comm_data(tr_code, record_name, 0, '예수금')
@@ -62,15 +64,13 @@ class KiwoomEventHandler(EventHandler):
             logger.info(f'account_name:{account_name}, cur_balance:{cur_balance}, cash:{cash}, cash2:{cash2}, '
                         f'buy_total:{buy_total}, print_count:{print_count}, count:{count}')
             for i in range(count):
+                self.print_tr_data(tr_code, record_name, 0, TrResultKey.BALANCE_MULTI)
                 code_raw = self.ocx.get_comm_data(tr_code, record_name, i, '종목코드')  # A096530
                 name = self.ocx.get_comm_data(tr_code, record_name, i, '종목명')  # 씨젠
                 quantity_str = self.ocx.get_comm_data(tr_code, record_name, i, '보유수량')  # 000000000010
                 buy_price_str = self.ocx.get_comm_data(tr_code, record_name, i, '평균단가')  # 000000037650
                 cur_price_str = self.ocx.get_comm_data(tr_code, record_name, i, '현재가')  # 000000037200
                 earning_rate_str = self.ocx.get_comm_data(tr_code, record_name, i, '손익율')  # -00000014688
-                logger.debug(
-                    f'code_raw:{code_raw}, name:{name}, quantity_str:{quantity_str}, buy_price_str:{buy_price_str}, '
-                    f'cur_price_str:{cur_price_str}, earning_rate_str:{earning_rate_str}')
                 code = code_raw[1:]  # Remove 'A'
                 quantity = int(quantity_str)
                 buy_price = int(buy_price_str)
@@ -85,7 +85,8 @@ class KiwoomEventHandler(EventHandler):
                 stock.buy_price = buy_price
                 stock.earning_rate = earning_rate
             self.model.set_updated(DataType.TABLE_BALANCE)
-        elif rq_name == RequestName.CODE_INFO.value:
+        elif rq_name == RqName.CODE_INFO.value:
+            self.print_tr_data(tr_code, record_name, 0, TrResultKey.CODE_SINGLE)
             code = self.ocx.get_comm_data(tr_code, record_name, 0, '종목코드').strip()
             name = self.ocx.get_comm_data(tr_code, record_name, 0, '종목명').strip()
             price_str = self.ocx.get_comm_data(tr_code, record_name, 0, '현재가').strip()
@@ -140,3 +141,9 @@ class KiwoomEventHandler(EventHandler):
             temp_stock_list.append(Stock(code, name))
             logger.debug("code: %s, name: %s", code, name)
         self.model.set_temp_stock_list(temp_stock_list)
+
+    def print_tr_data(self, tr_code, record_name, index, item_list):
+        logger.debug(f'---- tr_code: {tr_code}, record_name: {record_name}, index: {index}')
+        for item in item_list:
+            out_str = self.ocx.get_comm_data(tr_code, record_name, index, item)
+            logger.debug(f'"{item}" : "{out_str}"')
