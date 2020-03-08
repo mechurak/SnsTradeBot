@@ -8,6 +8,7 @@ from datetime import datetime
 
 from PyQt5.QtWidgets import *
 from sns_trade_bot.model.model import Model, DataType, ModelListener, OrderQueueItem, OrderType
+from sns_trade_bot.openapi.kiwoom_common import RqName, ScreenNo
 from sns_trade_bot.openapi.kiwoom_internal import KiwoomOcx
 from sns_trade_bot.openapi.kiwoom_event import KiwoomEventHandler
 
@@ -48,11 +49,11 @@ class Kiwoom:
                 logger.info('checking order_queue item')
                 item: OrderQueueItem = self.model.order_queue.get()
                 if item.type == OrderType.BUY:
-                    job = Job(self.buy_order, item.code, item.quantity)
+                    job = Job(self.tr_buy_order, item.code, item.quantity)
                     self.job_queue.put(job)
                     logger.info('put buy_order')
                 elif item.type == OrderType.SELL:
-                    job = Job(self.sell_order, item.code, item.quantity)
+                    job = Job(self.tr_sell_order, item.code, item.quantity)
                     self.job_queue.put(job)
                     logger.info('put sell_order')
                 else:
@@ -108,11 +109,23 @@ class Kiwoom:
     def request_code_info(self, the_code):
         self.ocx.request_code_info(the_code)
 
-    def buy_order(self, the_code, the_quantity):
-        logger.info(f'buy_order(). the_code:{the_code}, the_quantity:{the_quantity}')
+    def tr_buy_order(self, the_code, the_quantity):
+        logger.info(f'tr_buy_order(). the_code:{the_code}, the_quantity:{the_quantity}')
+        order_type = 1  # 신규매수
+        price = 0
+        hoga_gb = '03'  # 시장가
+        org_order_no = ''
+        self.ocx.send_order(RqName.ORDER.value, ScreenNo.ORDER.value, self.model.account, order_type, the_code,
+                            the_quantity, price, hoga_gb, org_order_no)
 
-    def sell_order(self, the_code, the_quantity):
-        logger.info(f'sell_order(). the_code:{the_code}, the_quantity:{the_quantity}')
+    def tr_sell_order(self, the_code, the_quantity):
+        logger.info(f'tr_sell_order(). the_code:{the_code}, the_quantity:{the_quantity}')
+        order_type = 2  # 신규매도
+        price = 0
+        hoga_gb = '03'  # 시장가
+        org_order_no = ''
+        self.ocx.send_order(RqName.ORDER.value, ScreenNo.ORDER.value, self.model.account, order_type, the_code,
+                            the_quantity, price, hoga_gb, org_order_no)
 
 
 if __name__ == "__main__":
@@ -136,6 +149,7 @@ if __name__ == "__main__":
             logger.info(f"on_data_updated. {data_type}")
             event_loop.exit()
 
+
     app = QApplication(sys.argv)
     tempWindow = QMainWindow()
     tempModelListener = TempModelListener()
@@ -144,6 +158,7 @@ if __name__ == "__main__":
     kiwoom_api = Kiwoom(model)
 
     from PyQt5.QtCore import QEventLoop
+
     event_loop = QEventLoop()
 
     kiwoom_api.comm_connect()

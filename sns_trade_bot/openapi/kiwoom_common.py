@@ -6,16 +6,18 @@ class ScreenNo(enum.Enum):
     INTEREST = '3333'  # 관심종목 조회
     BALANCE = '4444'  # 계좌평가현황요청
     CODE = '5555'  # 주식기본정보요청
+    ORDER = '6666'  # SendOrder()
 
 
 class RqName(enum.Enum):
     INTEREST_CODE = 'RQ_MULTI_CODE_QUERY'  # 관심종목정보요청 (OPTKWFID)
     BALANCE = 'RQ_BALANCE'  # 계좌평가현황요청 (OPW00004)
     CODE_INFO = 'RQ_CODE_INFO'  # 주식기본정보요청 (opt10001)
+    ORDER = 'RQ_ORDER'  # SendOrder()
 
 
 class EventHandler:
-    def event_connect(self, err_code):
+    def on_event_connect(self, err_code):
         pass
 
     def on_receive_tr_data(self, screen_no: str, rq_name: str, tr_code: str, record_name: str, pre_next: str, unused1,
@@ -25,7 +27,10 @@ class EventHandler:
     def on_receive_real_data(self, code: str, real_type: str, real_data: str):
         pass
 
-    def receive_chejan_data(self, gubun, item_cnt, fid_list):
+    def on_receive_msg(self, scr_no: str, rq_name: str, tr_code: str, msg: str):
+        pass
+
+    def on_receive_chejan_data(self, gubun, item_cnt, fid_list):
         pass
 
     def on_receive_condition_ver(self, ret: int, msg: str):

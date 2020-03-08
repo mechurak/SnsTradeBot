@@ -15,7 +15,7 @@ class KiwoomEventHandler(EventHandler):
         self.model = the_model
         self.ocx = the_ocx
 
-    def event_connect(self, err_code):
+    def on_event_connect(self, err_code):
         if err_code == 0:
             logger.info("connected")
             account_num = self.ocx.get_login_info('ACCNO')
@@ -117,7 +117,10 @@ class KiwoomEventHandler(EventHandler):
             for strategy in stock.buy_strategy_dic.values():
                 strategy.on_price_updated()
 
-    def receive_chejan_data(self, gubun, item_cnt, fid_list):
+    def on_receive_msg(self, scr_no: str, rq_name: str, tr_code: str, msg: str):
+        logger.info(f'scr_no:{scr_no}, rq_name:{rq_name}, tr_code:{tr_code}, msg:{msg}')
+
+    def on_receive_chejan_data(self, gubun, item_cnt, fid_list):
         logger.info(f'gubun:{gubun}, item_cnt:{item_cnt}, fid_list:{fid_list}')
         logger.info(self.ocx.get_chejan_data(9203))
         logger.info(self.ocx.get_chejan_data(302))

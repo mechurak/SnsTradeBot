@@ -6,7 +6,6 @@ from unittest.mock import Mock
 
 from PyQt5.QtWidgets import *
 from sns_trade_bot.openapi.kiwoom import Kiwoom
-from sns_trade_bot.openapi.kiwoom_common import ScreenNo, RqName
 from sns_trade_bot.model.model import Model, ModelListener, DataType
 
 logger = logging.getLogger()
@@ -47,8 +46,8 @@ class TestKiwoom(unittest.TestCase):
             logger.info(f'temp_sell_order(). the_code:{the_code}, the_quantity:{the_quantity}')
             return None
 
-        self.kiwoom_api.buy_order = Mock(side_effects=temp_buy_order)
-        self.kiwoom_api.sell_order = Mock(side_effects=temp_sell_order)
+        self.kiwoom_api.tr_buy_order = Mock(side_effects=temp_buy_order)
+        self.kiwoom_api.tr_sell_order = Mock(side_effects=temp_sell_order)
 
         stock0001 = self.model.get_stock('0001')
         stock0001.name = '테스트종목'
@@ -63,10 +62,10 @@ class TestKiwoom(unittest.TestCase):
         time.sleep(3)
 
         # then
-        self.kiwoom_api.buy_order.assert_called()
-        logger.info(f'buy_order call_count: {self.kiwoom_api.buy_order.call_count}')
-        self.kiwoom_api.sell_order.assert_called()
-        logger.info(f'sell_order call_count: {self.kiwoom_api.sell_order.call_count}')
+        self.kiwoom_api.tr_buy_order.assert_called()
+        logger.info(f'buy_order call_count: {self.kiwoom_api.tr_buy_order.call_count}')
+        self.kiwoom_api.tr_sell_order.assert_called()
+        logger.info(f'sell_order call_count: {self.kiwoom_api.tr_sell_order.call_count}')
 
 
 if __name__ == '__main__':

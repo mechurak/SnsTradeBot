@@ -16,11 +16,13 @@ class KiwoomOcx(QAxWidget):
         self.setControl("KHOPENAPI.KHOpenAPICtrl.1")
 
     def set_event_handler(self, event_handler: EventHandler):
-        self.OnEventConnect.connect(event_handler.event_connect)
+        self.OnEventConnect.connect(event_handler.on_event_connect)
         self.OnReceiveTrCondition.connect(event_handler.on_receive_tr_condition)
         self.OnReceiveConditionVer.connect(event_handler.on_receive_condition_ver)
         self.OnReceiveTrData.connect(event_handler.on_receive_tr_data)
         self.OnReceiveRealData.connect(event_handler.on_receive_real_data)
+        self.OnReceiveMsg.connect(event_handler.on_receive_msg)
+        self.OnReceiveChejanData.connect(event_handler.on_receive_chejan_data)
 
     def comm_connect(self):
         self.dynamicCall("CommConnect()")
@@ -73,9 +75,30 @@ class KiwoomOcx(QAxWidget):
         ret = self.dynamicCall("GetRepeatCnt(QString, QString)", tr_code, target_record[tr_code])
         return ret
 
-    def send_order(self, rqname, screen_no, acc_no, order_type, code, quantity, price, hoga, order_no):
-        self.dynamicCall("SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
-                         [rqname, screen_no, acc_no, order_type, code, quantity, price, hoga, order_no])
+    def send_order(self, rq_name: str, screen_no: str, acc_no: str, order_type: int, code: str, qty: int, price: int,
+                   hoga_gb: str, org_order_no: str) -> int:
+        """주식 주문을 서버로 전송한다.
+
+        시장가, 최유리지정가, 최우선지정가, 시장가IOC, 최유리IOC, 시장가FOK, 최유리FOK, 장전시간외, 장후시간외 주문시
+        주문가격을 입력하지 않습니다.
+
+        관련 이벤트: on_receive_tr_data, on_receive_msg, on_receive_chejan_data
+
+        :param rq_name: 사용자 구분 요청 명
+        :param screen_no: 화면번호[4]
+        :param acc_no: 계좌번호[10]
+        :param order_type: 주문유형 (1:신규매수, 2:신규매도, 3:매수취소, 4:매도취소, 5:매수정정, 6:매도정정)
+        :param code: 주식종목코드
+        :param qty: 주문수량
+        :param price: 주문단가
+        :param hoga_gb: 호가구분 (00:지정가, 03:시장가, 05:조건부지정가, 06:최유리지정가, 07:최우선지정가,
+            10:지정가IOC, 13:시장가IOC, 16:최유리IOC, 20:지정가FOK, 23:시장가FOK, 26:최유리FOK, 61:장전시간외종가,
+            62:시간외단일가, 81:장후시간외종가)
+        :param org_order_no: 원주문번호
+        :return: 0 if successful, otherwise negative value.
+        """
+        return self.dynamicCall("SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
+                                [rq_name, screen_no, acc_no, order_type, code, qty, price, hoga_gb, org_order_no])
 
     def get_chejan_data(self, fid):
         ret = self.dynamicCall("GetChejanData(int)", fid)
