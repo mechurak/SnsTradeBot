@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 class SellOnCondition(StrategyBase):
     NAME = 'sell_on_condition'
     DEFAULT_THRESHOLD = 0.01  # 1% 이상 수익이 아니라면 팔지 않음
+    DEFAULT_PARAM = {'threshold': DEFAULT_THRESHOLD}
 
     def __init__(self, the_stock, the_param_dic):
         super().__init__(the_stock, the_param_dic)

@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 class SellStopLoss(StrategyBase):
     NAME = 'sell_stop_loss'
     DEFAULT_THRESHOLD = -0.03
+    DEFAULT_PARAM = {'threshold': DEFAULT_THRESHOLD}
 
     def __init__(self, the_stock, the_param_dic):
         super().__init__(the_stock, the_param_dic)

@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 class BuyOnOpening(StrategyBase):
     NAME = 'buy_on_opening'
     DEFAULT_BUDGET = 30  # 만원
+    DEFAULT_PARAM = {'budget': DEFAULT_BUDGET}
 
     def __init__(self, the_stock, the_param_dic):
         super().__init__(the_stock, the_param_dic)

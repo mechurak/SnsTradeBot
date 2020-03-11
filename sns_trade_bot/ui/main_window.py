@@ -2,10 +2,12 @@ import logging
 import os
 import sys
 from sns_trade_bot.model.model import Model, ModelListener, DataType
+from sns_trade_bot.strategy.base import StrategyBase
 from abc import abstractmethod
 
 from PyQt5 import uic
 from PyQt5.QtWidgets import *
+from PyQt5.QtCore import pyqtSlot
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +74,9 @@ class MainWindow(QMainWindow, ModelListener):
         self.btn_save.clicked.connect(self.model.save)
         self.btn_print.clicked.connect(self.model.print)
         self.btn_temp_code_add.clicked.connect(self.model.add_all_temp_stock)
+        self.combo_buy.addItems(StrategyBase.BUY_STRATEGY_LIST)
+        self.combo_sell.addItems(StrategyBase.SELL_STRATEGY_LIST)
+        self.selected_balance = []
 
     def set_listener(self, the_listener):
         self.listener = the_listener
@@ -86,6 +91,35 @@ class MainWindow(QMainWindow, ModelListener):
         code = self.edit_code.text()
         self.listener.btn_code_add_clicked(code)
         self.edit_code.setText('')
+
+    @pyqtSlot(str)
+    def on_combo_buy_strategy_changed(self, strategy):
+        logger.info(f'on_combo_buy_strategy_changed: {strategy}')
+        from sns_trade_bot.strategy.buy_just_buy import BuyJustBuy
+        from sns_trade_bot.strategy.buy_on_opening import BuyOnOpening
+        if strategy == "buy_just_buy":
+            default_param = BuyJustBuy.DEFAULT_PARAM
+        elif strategy == "buy_on_opening":
+            default_param = BuyOnOpening.DEFAULT_PARAM
+        else:
+            return
+        self.ui.txt_buy_param.setText(str(default_param))
+
+    @pyqtSlot(str)
+    def on_combo_sell_strategy_changed(self, strategy):
+        logger.info(f'on_combo_sell_strategy_changed: {strategy}')
+        from sns_trade_bot.strategy.sell_on_closing import SellOnClosing
+        from sns_trade_bot.strategy.sell_on_condition import SellOnCondition
+        from sns_trade_bot.strategy.sell_stop_loss import SellStopLoss
+        if strategy == "sell_on_closing":
+            default_param = SellOnClosing.DEFAULT_PARAM
+        elif strategy == "sell_on_condition":
+            default_param = SellOnCondition.DEFAULT_PARAM
+        elif strategy == "sell_stop_loss":
+            default_param = SellStopLoss.DEFAULT_PARAM
+        else:
+            return
+        self.ui.txt_sell_param.setText(str(default_param))
 
     def on_data_updated(self, data_type: DataType):
         logger.info(f"data_type: {data_type}")

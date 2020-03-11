@@ -5,6 +5,9 @@ logger = logging.getLogger(__name__)
 
 class StrategyBase:
     NAME = 'strategy_base'
+    DEFAULT_PARAM = {}
+    BUY_STRATEGY_LIST = ['buy_just_buy', 'buy_on_opening']
+    SELL_STRATEGY_LIST = ['sell_on_closing', 'sell_on_condition', 'sell_stop_loss']
 
     def __init__(self, the_stock, the_param_dic):
         self.stock = the_stock

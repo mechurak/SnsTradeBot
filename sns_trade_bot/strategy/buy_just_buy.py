@@ -6,6 +6,7 @@ logger = logging.getLogger(__name__)
 
 class BuyJustBuy(StrategyBase):
     NAME = 'buy_just_buy'
+    DEFAULT_PARAM = {}
 
     def __init__(self, the_stock, the_param_dic):
         super().__init__(the_stock, the_param_dic)
