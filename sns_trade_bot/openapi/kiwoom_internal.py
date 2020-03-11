@@ -100,9 +100,14 @@ class KiwoomOcx(QAxWidget):
         return self.dynamicCall("SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
                                 [rq_name, screen_no, acc_no, order_type, code, qty, price, hoga_gb, org_order_no])
 
-    def get_chejan_data(self, fid):
+    def get_chejan_data(self, fid: int) -> str:
+        """체결잔고 데이터를 반환한다.
+
+        :param fid: 체결잔고 아이템
+        :return: 수신 데이터
+        """
         ret = self.dynamicCall("GetChejanData(int)", fid)
-        return ret
+        return ret.strip()
 
     def get_login_info(self, tag):
         ret = self.dynamicCall("GetLoginInfo(QString)", tag)
@@ -163,9 +168,13 @@ class KiwoomOcx(QAxWidget):
         logger.info(f'call set_real_reg(). ret: {ret}')
         return ret
 
-    def set_real_remove(self, the_code):
-        logger.info("the_code %s", the_code)
-        ret = self.dynamicCall("SetRealRemove(QString, QString)", [ScreenNo.REAL.value, the_code])
+    def set_real_remove(self, scr_no: str, del_code: str):
+        """종목별 실시간 해제(SetRealReg()로 등록한 종목만 실시간 해제 가능)
+
+        :param scr_no: 실시간 해제할 화면 번호
+        :param del_code: 실시간 해제할 종목
+        """
+        ret = self.dynamicCall("SetRealRemove(QString, QString)", [scr_no, del_code])
         logger.info(f'SetRealRemove(). ret: {ret}')
 
     def disconnect_real_data(self, screen_no: ScreenNo):

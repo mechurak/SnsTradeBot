@@ -121,11 +121,38 @@ class KiwoomEventHandler(EventHandler):
         logger.info(f'scr_no:{scr_no}, rq_name:{rq_name}, tr_code:{tr_code}, msg:{msg}')
 
     def on_receive_chejan_data(self, gubun, item_cnt, fid_list):
+        """체결 데이터를 받은 시점을 알려준다
+
+        :param gubun: 체결구분 (0:접수/체결 , 1:국내주식 잔고통보, 4:파생상품 잔고통보)
+        :param item_cnt: 아이템 개수
+        :param fid_list: 데이터리스트 (';'로 구분)
+        """
         logger.info(f'gubun:{gubun}, item_cnt:{item_cnt}, fid_list:{fid_list}')
-        logger.info(self.ocx.get_chejan_data(9203))
-        logger.info(self.ocx.get_chejan_data(302))
-        logger.info(self.ocx.get_chejan_data(900))
-        logger.info(self.ocx.get_chejan_data(901))
+        fid_str_list = fid_list.split(";")
+        for fid_str in fid_str_list:
+            ret = self.ocx.get_chejan_data(int(fid_str))
+            logger.debug(f'  {fid_str}: {ret}')
+
+        order_id = self.ocx.get_chejan_data(9203)  # 주문번호
+        code = self.ocx.get_chejan_data(9001)  # 종목코드,업종코드
+        code = code[1:]  # Remove 'A'
+        name = self.ocx.get_chejan_data(302)  # 종목명
+
+        if gubun == '0':  # 주문접수 or 주문체결
+            status = self.ocx.get_chejan_data(913)  # 주문상태 ('접수' or '체결')
+            order_type = self.ocx.get_chejan_data(913)  # 매도수구분 ('1':매도, '2':매수)
+            time_str = self.ocx.get_chejan_data(908)  # 주문/체결시간 (HHMMSSMS)
+            if status == '체결':
+                logger.info('체결 신호!!!')
+                if order_type == '2':  # 매수
+                    # TODO: 종목 실시간 등록 및 조건식 실시간 재적용(?)
+                    pass
+        elif gubun == '1':  # 잔고통보
+            qty = int(self.ocx.get_chejan_data(930))  # 보유수량
+            if qty == 0:
+                logger.info(f'{name}({code}) 청산 완료!!')
+                self.model.remove_stock(code)
+                self.ocx.set_real_remove(ScreenNo.REAL.value, code)
 
     def on_receive_condition_ver(self, ret: int, msg: str):
         logger.debug(f'ret: {ret}, msg: {msg}')  # ret: 사용자 조건식 저장 성공여부 (1: 성공, 나머지 실패)

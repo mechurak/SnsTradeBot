@@ -188,6 +188,11 @@ class Model:
             logger.debug("new code '%s'. create new stock", the_code)
         return self.stock_dic[the_code]
 
+    def remove_stock(self, the_code):
+        if the_code not in self.stock_dic:
+            logger.error(f'unexpected code:{the_code}')
+        del self.stock_dic[the_code]
+
     def get_code_list(self, the_hold_type):
         if the_hold_type == HoldType.ALL:
             return self.stock_dic.keys()
