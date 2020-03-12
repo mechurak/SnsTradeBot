@@ -121,6 +121,82 @@ class MainWindow(QMainWindow, ModelListener):
             return
         self.ui.txt_sell_param.setText(str(default_param))
 
+    @pyqtSlot()
+    def on_btn_buy_strategy_add_clicked(self):
+        strategy_str = self.combo_buy.currentText()
+        logger.info(self.txt_buy_param.text())
+        param_dic = eval(self.txt_buy_param.text())
+        logger.info(f"전략: {strategy_str}, param_dic: {param_dic}")
+
+        items = self.table_balance.selectedItems()
+        for item in items:
+            if item.column() == 0:  # 종목코드
+                code = item.text()
+                stock = self.model.get_stock(code)
+                stock.add_buy_strategy(strategy_str, param_dic)
+                logger.info(f'{code}: {strategy_str}')
+        self.model.set_updated(DataType.TABLE_BALANCE)
+
+    @pyqtSlot()
+    def on_btn_sell_strategy_add_clicked(self):
+        strategy_str = self.combo_sell.currentText()
+        logger.info(self.txt_sell_param.text())
+        param_dic = eval(self.txt_sell_param.text())
+        logger.info(f"전략: {strategy_str}, param_dic: {param_dic}")
+
+        items = self.table_balance.selectedItems()
+        for item in items:
+            if item.column() == 0:  # 종목코드
+                code = item.text()
+                stock = self.model.get_stock(code)
+                stock.add_sell_strategy(strategy_str, param_dic)
+                logger.info(f'{code}: {strategy_str}')
+        self.model.set_updated(DataType.TABLE_BALANCE)
+        pass
+
+    @pyqtSlot()
+    def on_btn_buy_strategy_clear_clicked(self):
+        logger.info('on_btn_buy_strategy_clear_clicked')
+        items = self.table_balance.selectedItems()
+        for item in items:
+            if item.column() == 0:  # 종목코드
+                code = item.text()
+                stock = self.model.get_stock(code)
+                stock.buy_strategy_dic.clear()
+        self.model.set_updated(DataType.TABLE_BALANCE)
+
+    @pyqtSlot()
+    def on_btn_sell_strategy_clear_clicked(self):
+        logger.info('on_btn_sell_strategy_clear_clicked')
+        items = self.table_balance.selectedItems()
+        for item in items:
+            if item.column() == 0:  # 종목코드
+                code = item.text()
+                stock = self.model.get_stock(code)
+                stock.sell_strategy_dic.clear()
+        self.model.set_updated(DataType.TABLE_BALANCE)
+
+    @pyqtSlot()
+    def on_table_balance_selection_changed(self):
+        items = self.table_balance.selectedItems()
+        self.model.selected_code_list = []
+        for item in items:
+            if item.column() == 0:  # 종목코드
+                code = item.text()
+                self.model.selected_code_list.append(code)
+                logger.info(f'{code}: {item.row()} {item.column()} {item.text()}')
+
+    @pyqtSlot(QTableWidgetItem)
+    def on_table_balance_item_changed(self, item):
+        if item.column() == 5:  # 목표보유수량
+            row = item.row()
+            target_qty = int(item.text())
+            code_item = self.table_balance.item(row, 0)
+            code = code_item.text()
+            stock = self.model.get_stock(code)
+            stock.target_quantity = target_qty
+            logger.info(f'{code}: {target_qty}')
+
     def on_data_updated(self, data_type: DataType):
         logger.info(f"data_type: {data_type}")
         if data_type == DataType.COMBO_ACCOUNT:
@@ -142,7 +218,7 @@ class MainWindow(QMainWindow, ModelListener):
                 self.table_balance.setItem(i, 5, QTableWidgetItem(str(stock.target_quantity)))
                 self.table_balance.setItem(i, 6, QTableWidgetItem(str(stock.earning_rate)))
                 self.table_balance.setItem(i, 7, QTableWidgetItem(str(list(stock.buy_strategy_dic.keys()))))
-                self.table_balance.setItem(i, 8, QTableWidgetItem(str(list(stock.buy_strategy_dic.keys()))))
+                self.table_balance.setItem(i, 8, QTableWidgetItem(str(list(stock.sell_strategy_dic.keys()))))
         elif data_type == DataType.TABLE_CONDITION:
             header = ["인덱스", "조건명", "신호종류", "적용유무", "요청버튼"]
             self.table_condition.setColumnCount(len(header))
@@ -177,6 +253,8 @@ if __name__ == "__main__":
     stream_handler = logging.StreamHandler()
     logger.addHandler(stream_handler)
 
+    model = Model()
+
 
     class TempListener(UiListener):
         def account_changed(self, the_account):
@@ -193,6 +271,8 @@ if __name__ == "__main__":
 
         def btn_code_add_clicked(self, code):
             logger.info(f'btn_code_add_clicked. code: {code}')
+            model.get_stock(code)
+            model.set_updated(DataType.TABLE_BALANCE)
 
         def btn_refresh_condition_list_clicked(self):
             logger.info("btn_refresh_condition_list_clicked")
@@ -202,7 +282,6 @@ if __name__ == "__main__":
 
 
     app = QApplication(sys.argv)
-    model = Model()
     mainWindow = MainWindow(model)
     listener = TempListener()
     mainWindow.set_listener(listener)

@@ -132,7 +132,7 @@
      <rect>
       <x>10</x>
       <y>80</y>
-      <width>991</width>
+      <width>1011</width>
       <height>311</height>
      </rect>
     </property>
@@ -148,6 +148,15 @@
        <height>241</height>
       </rect>
      </property>
+     <property name="selectionMode">
+      <enum>QAbstractItemView::ExtendedSelection</enum>
+     </property>
+     <property name="selectionBehavior">
+      <enum>QAbstractItemView::SelectRows</enum>
+     </property>
+     <property name="sortingEnabled">
+      <bool>true</bool>
+     </property>
      <property name="rowCount">
       <number>10</number>
      </property>
@@ -155,7 +164,7 @@
       <number>10</number>
      </property>
      <attribute name="verticalHeaderVisible">
-      <bool>false</bool>
+      <bool>true</bool>
      </attribute>
      <row/>
      <row/>
@@ -233,49 +242,13 @@
       </item>
      </layout>
     </widget>
-    <widget class="QLabel" name="label_4">
-     <property name="geometry">
-      <rect>
-       <x>670</x>
-       <y>20</y>
-       <width>111</width>
-       <height>21</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>선택종목</string>
-     </property>
-    </widget>
-    <widget class="QTextEdit" name="txt_selected_code">
-     <property name="geometry">
-      <rect>
-       <x>670</x>
-       <y>40</y>
-       <width>311</width>
-       <height>41</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="btn_code_clear">
-     <property name="geometry">
-      <rect>
-       <x>890</x>
-       <y>20</y>
-       <width>91</width>
-       <height>21</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>선택종목 clear</string>
-     </property>
-    </widget>
     <widget class="QWidget" name="gridLayoutWidget_2">
      <property name="geometry">
       <rect>
        <x>670</x>
-       <y>100</y>
+       <y>20</y>
        <width>311</width>
-       <height>131</height>
+       <height>151</height>
       </rect>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
@@ -387,7 +360,7 @@
      <rect>
       <x>430</x>
       <y>10</y>
-      <width>321</width>
+      <width>351</width>
       <height>61</height>
      </rect>
     </property>
@@ -498,12 +471,12 @@
    <slot>on_combo_buy_strategy_changed(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>756</x>
-     <y>234</y>
+     <x>746</x>
+     <y>167</y>
     </hint>
     <hint type="destinationlabel">
-     <x>585</x>
-     <y>403</y>
+     <x>823</x>
+     <y>31</y>
     </hint>
    </hints>
   </connection>
@@ -514,12 +487,108 @@
    <slot>on_combo_sell_strategy_changed(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>920</x>
-     <y>237</y>
+     <x>910</x>
+     <y>170</y>
     </hint>
     <hint type="destinationlabel">
-     <x>1076</x>
-     <y>133</y>
+     <x>919</x>
+     <y>54</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btn_buy_strategy_add</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_btn_buy_strategy_add_clicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>778</x>
+     <y>230</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>835</x>
+     <y>569</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btn_sell_strategy_add</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_btn_sell_strategy_add_clicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>945</x>
+     <y>230</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>960</x>
+     <y>527</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btn_buy_strategy_clear</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_btn_buy_strategy_clear_clicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>767</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>831</x>
+     <y>592</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btn_sell_strategy_clear</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_btn_sell_strategy_clear_clicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>958</x>
+     <y>256</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>972</x>
+     <y>491</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>table_balance</sender>
+   <signal>itemSelectionChanged()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_table_balance_selection_changed()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>383</x>
+     <y>214</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>412</x>
+     <y>65</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>table_balance</sender>
+   <signal>itemChanged(QTableWidgetItem*)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_table_balance_item_changed(QTableWidgetItem*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>34</x>
+     <y>293</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>176</x>
+     <y>28</y>
     </hint>
    </hints>
   </connection>
@@ -527,5 +596,11 @@
  <slots>
   <slot>on_combo_buy_strategy_changed(QString)</slot>
   <slot>on_combo_sell_strategy_changed(QString)</slot>
+  <slot>on_btn_buy_strategy_add_clicked()</slot>
+  <slot>on_btn_sell_strategy_add_clicked()</slot>
+  <slot>on_btn_buy_strategy_clear_clicked()</slot>
+  <slot>on_btn_sell_strategy_clear_clicked()</slot>
+  <slot>on_table_balance_selection_changed()</slot>
+  <slot>on_table_balance_item_changed(QTableWidgetItem*)</slot>
  </slots>
 </ui>

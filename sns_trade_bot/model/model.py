@@ -137,6 +137,7 @@ class Model:
         self.temp_stock_list = []
         self.listener = None
         self.order_queue = queue.Queue()
+        self.selected_code_list = []
 
     def __str__(self):
         ret_str = '====== UserData =======\n'
