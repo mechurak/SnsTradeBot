@@ -28,7 +28,7 @@ class TestKiwoom(unittest.TestCase):
         self.tempWindow = QMainWindow()
         self.tempModelListener = TempModelListener()
         self.model = Model()
-        self.model.set_listener(self.tempModelListener)
+        self.model.add_listener(self.tempModelListener)
         self.kiwoom_api = Kiwoom(self.model)
 
     def tearDown(self):

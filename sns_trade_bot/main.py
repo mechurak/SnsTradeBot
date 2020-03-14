@@ -5,7 +5,7 @@ from datetime import datetime
 from PyQt5.QtWidgets import QApplication
 from sns_trade_bot.ui.main_window import MainWindow, UiListener
 from sns_trade_bot.openapi.kiwoom import Kiwoom
-from sns_trade_bot.model.model import Model, HoldType
+from sns_trade_bot.model.model import Model, HoldType, ModelListener, DataType
 import sns_trade_bot.slack.run
 import threading
 
@@ -29,7 +29,7 @@ logger.addHandler(stream_handler)
 logger.info(f'file_name: {file_name}')
 
 
-class Manager(UiListener):
+class Manager(UiListener, ModelListener):
     model: Model
     main_window: MainWindow
     kiwoom_api: Kiwoom
@@ -46,12 +46,12 @@ class Manager(UiListener):
 
     def btn_balance_clicked(self):
         logger.info("btn_balance_clicked")
-        self.kiwoom_api.request_account_detail()
+        self.kiwoom_api.tr_account_detail()
 
     def btn_interest_balance_clicked(self):
         logger.info('btn_interest_balance_clicked')
         interest_code_list = self.model.get_code_list(HoldType.INTEREST)
-        self.kiwoom_api.comm_kw_rq_data_async(interest_code_list)
+        self.kiwoom_api.tr_multi_code_detail(interest_code_list)
 
     def btn_real_clicked(self):
         logger.info('btn_real_clicked')
@@ -60,16 +60,27 @@ class Manager(UiListener):
 
     def btn_code_add_clicked(self, code):
         logger.info(f'btn_code_add_clicked. code: {code}')
-        self.kiwoom_api.request_code_info(code)
+        self.kiwoom_api.tr_code_info(code)
 
     def btn_refresh_condition_list_clicked(self):
         logger.info("btn_refresh_condition_list_clicked")
-        ret = self.kiwoom_api.get_condition_load_async()
-        assert ret == 1, "get_condition_load_async() failed"
+        self.kiwoom_api.tr_load_condition_list()
 
     def btn_query_condition_clicked(self, condition):
         logger.info(f'btn_query_condition_clicked. {condition.index} {condition.name}')
-        self.kiwoom_api.send_condition_async('1111', condition.name, condition.index, 0)
+        self.kiwoom_api.tr_check_condition(condition)
+
+    # ModelListener
+    def on_data_updated(self, data_type: DataType):
+        pass
+
+    def on_buy_signal(self, code: str, qty: int):
+        logger.info(f'on_buy_signal!! code:{code}, qty:{qty}')
+        self.kiwoom_api.tr_buy_order(code, qty)
+
+    def on_sell_signal(self, code: str, qty: int):
+        logger.info(f'on_sell_signal!! code:{code}, qty:{qty}')
+        self.kiwoom_api.tr_sell_order(code, qty)
 
 
 if __name__ == "__main__":
@@ -86,9 +97,9 @@ if __name__ == "__main__":
     kiwoom_api = Kiwoom(model)
 
     manager = Manager(model, main_window, kiwoom_api)
-
+    model.add_listener(manager)
     main_window.set_listener(manager)
-    kiwoom_api.comm_connect()
+    kiwoom_api.tr_connect()
 
     main_window.show()
     sys.exit(app.exec_())

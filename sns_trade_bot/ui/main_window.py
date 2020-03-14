@@ -69,7 +69,7 @@ class MainWindow(QMainWindow, ModelListener):
         self.model = the_model
         abspath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "MainWindow.ui")
         self.ui = uic.loadUi(abspath, self)
-        self.model.set_listener(self)
+        self.model.add_listener(self)
         self.btn_load.clicked.connect(self.model.load)
         self.btn_save.clicked.connect(self.model.save)
         self.btn_print.clicked.connect(self.model.print)
@@ -205,7 +205,7 @@ class MainWindow(QMainWindow, ModelListener):
             self.combo_account.setCurrentIndex(self.ui.combo_account.findText(self.model.account))
         elif data_type == DataType.TABLE_BALANCE:
             header = ["종목코드", "종목명", "현재가", "매입가", "보유수량", "목표보유수량", "수익률", "매수전략", "매도전략"]
-            self.table_balance.clear()
+            self.table_balance.reset()
             self.table_balance.setColumnCount(len(header))
             self.table_balance.setHorizontalHeaderLabels(header)
             self.table_balance.setRowCount(len(self.model.stock_dic))

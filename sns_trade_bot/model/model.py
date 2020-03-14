@@ -8,9 +8,28 @@ from abc import abstractmethod
 logger = logging.getLogger(__name__)
 
 
+class DataType(enum.Enum):
+    COMBO_ACCOUNT = 0
+    TABLE_BALANCE = 1
+    TABLE_CONDITION = 4
+    TABLE_TEMP_STOCK = 5
+
+
+class ModelListener:
+    @abstractmethod
+    def on_data_updated(self, data_type: DataType):
+        pass
+
+    def on_buy_signal(self, code: str,  qty: int):
+        pass
+
+    def on_sell_signal(self, code: str,  qty: int):
+        pass
+
+
 class Stock:
-    def __init__(self, the_order_queue: queue.Queue, the_code: str, the_name: str = 'UNDEFINED', the_cur_price: int = 0):
-        self.order_queue = the_order_queue
+    def __init__(self, the_listener: ModelListener, the_code: str, the_name: str = 'UNDEFINED', the_cur_price: int = 0):
+        self.listener = the_listener
         self.code = the_code  # 종목코드
         self.name = the_name  # 종목명
         self.cur_price = the_cur_price  # 현재가
@@ -44,7 +63,7 @@ class Stock:
         from sns_trade_bot.strategy.buy_on_opening import BuyOnOpening
         if the_strategy_name == 'buy_just_buy':
             self.buy_strategy_dic[the_strategy_name] = BuyJustBuy(self, the_param_dic)
-        if the_strategy_name == 'buy_on_opening':
+        elif the_strategy_name == 'buy_on_opening':
             self.buy_strategy_dic[the_strategy_name] = BuyOnOpening(self, the_param_dic)
         else:
             logger.error(f'unknown buy strategy "{the_strategy_name}" for "{self.name}"')
@@ -63,24 +82,12 @@ class Stock:
             logger.error(f'unknown sell strategy "{the_strategy_name}" for "{self.name}"')
 
     def on_buy_signal(self, the_strategy_name: str, the_order_quantity: int):
-        logger.info("buy_signal!! for %s. the_strategy: %s, the_order_quantity: %d", self.name, the_strategy_name,
-                    the_order_quantity)
-        queue_item = OrderQueueItem()
-        queue_item.type = OrderType.BUY
-        queue_item.code = self.code
-        queue_item.quantity = the_order_quantity
-        queue_item.strategy_name = the_strategy_name
-        self.order_queue.put(queue_item)
+        logger.info(f'buy_signal!! {self.name}. strategy:{the_strategy_name}, qty:{the_order_quantity}')
+        self.listener.on_buy_signal(self.code, the_order_quantity)
 
     def on_sell_signal(self, the_strategy_name: str, the_order_quantity: int):
-        logger.info("sell_signal!! for %s. the_strategy: %s, the_order_quantity: %d", self.name, the_strategy_name,
-                    the_order_quantity)
-        queue_item = OrderQueueItem()
-        queue_item.type = OrderType.SELL
-        queue_item.code = self.code
-        queue_item.quantity = the_order_quantity
-        queue_item.strategy_name = the_strategy_name
-        self.order_queue.put(queue_item)
+        logger.info(f'sell_signal!! {self.name}. strategy:{the_strategy_name}, qty:{the_order_quantity}')
+        self.listener.on_sell_signal(self.code, the_order_quantity)
 
 
 class Condition:
@@ -91,37 +98,11 @@ class Condition:
         self.enabled = False
 
 
-class DataType(enum.Enum):
-    COMBO_ACCOUNT = 0
-    TABLE_BALANCE = 1
-    TABLE_CONDITION = 4
-    TABLE_TEMP_STOCK = 5
-
-
 class HoldType(enum.Enum):
     INTEREST = 0
     HOLDING = 1
     TARGET = 2
     ALL = 10
-
-
-class ModelListener:
-    @abstractmethod
-    def on_data_updated(self, data_type: DataType):
-        pass
-
-
-class OrderType(enum.Enum):
-    UNDEFINED = 0
-    BUY = 1
-    SELL = 2
-
-
-class OrderQueueItem:
-    type: OrderType
-    code: str
-    quantity: int
-    strategy_name: str
 
 
 class Model:
@@ -135,7 +116,7 @@ class Model:
         self.condition_list = [Condition(1, 'temp1'), Condition(2, 'temp2')]
         self.stock_dic = {}
         self.temp_stock_list = []
-        self.listener = None
+        self.listener_list = []
         self.order_queue = queue.Queue()
         self.selected_code_list = []
 
@@ -154,8 +135,8 @@ class Model:
         for k, v in self.stock_dic.items():
             logger.info(f'  {k}: {v}')
 
-    def set_listener(self, the_listener: ModelListener):
-        self.listener = the_listener
+    def add_listener(self, the_listener: ModelListener):
+        self.listener_list.append(the_listener)
 
     def save(self):
         logger.info('save')
@@ -180,8 +161,8 @@ class Model:
                 stock.add_buy_strategy(k, v)
             for k, v in loaded_stock['sell_strategy_dic'].items():
                 stock.add_sell_strategy(k, v)
-        if self.listener:
-            self.listener.on_data_updated(DataType.TABLE_BALANCE)
+        for listener in self.listener_list:
+            listener.on_data_updated(DataType.TABLE_BALANCE)
 
     def get_stock(self, the_code) -> Stock:
         if the_code not in self.stock_dic:
@@ -217,8 +198,8 @@ class Model:
     def set_account_list(self, the_account_list):
         self.account_list = the_account_list
         self.account = the_account_list[0]
-        if self.listener:
-            self.listener.on_data_updated(DataType.COMBO_ACCOUNT)
+        for listener in self.listener_list:
+            listener.on_data_updated(DataType.COMBO_ACCOUNT)
 
     def set_account(self, the_account: str):
         assert the_account in self.account_list, 'unexpected account!!!'
@@ -228,8 +209,8 @@ class Model:
         self.condition_list = []
         for index, name in the_condition_dic.items():
             self.condition_list.append(Condition(index, name))
-        if self.listener:
-            self.listener.on_data_updated(DataType.TABLE_CONDITION)
+        for listener in self.listener_list:
+            listener.on_data_updated(DataType.TABLE_CONDITION)
 
     def get_condition_name_dic(self):
         ret_dic = {}
@@ -239,21 +220,21 @@ class Model:
 
     def set_temp_stock_list(self, temp_stock_list: list):
         self.temp_stock_list = temp_stock_list
-        if self.listener:
-            self.listener.on_data_updated(DataType.TABLE_TEMP_STOCK)
+        for listener in self.listener_list:
+            listener.on_data_updated(DataType.TABLE_TEMP_STOCK)
 
     def add_all_temp_stock(self):
         for stock in self.temp_stock_list:
             if stock.code not in self.stock_dic:
                 self.stock_dic[stock.code] = stock
         self.temp_stock_list = []
-        if self.listener:
-            self.listener.on_data_updated(DataType.TABLE_BALANCE)
-            self.listener.on_data_updated(DataType.TABLE_TEMP_STOCK)
+        for listener in self.listener_list:
+            listener.on_data_updated(DataType.TABLE_BALANCE)
+            listener.on_data_updated(DataType.TABLE_TEMP_STOCK)
 
     def set_updated(self, the_data_type: DataType):
-        if self.listener:
-            self.listener.on_data_updated(the_data_type)
+        for listener in self.listener_list:
+            listener.on_data_updated(the_data_type)
 
 
 if __name__ == "__main__":

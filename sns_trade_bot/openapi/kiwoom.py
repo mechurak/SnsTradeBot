@@ -7,7 +7,7 @@ import time
 from datetime import datetime
 
 from PyQt5.QtWidgets import *
-from sns_trade_bot.model.model import Model, DataType, ModelListener, OrderQueueItem, OrderType
+from sns_trade_bot.model.model import Model, DataType, ModelListener, Condition
 from sns_trade_bot.openapi.kiwoom_common import RqName, ScreenNo
 from sns_trade_bot.openapi.kiwoom_internal import KiwoomOcx
 from sns_trade_bot.openapi.kiwoom_event import KiwoomEventHandler
@@ -37,77 +37,78 @@ class Kiwoom:
         self.handler = KiwoomEventHandler(self.model, self.ocx)
         self.ocx.set_event_handler(self.handler)
 
-        self.job_queue = queue.Queue()
-        t = threading.Thread(target=self.basic_worker)
+        self.tr_queue = queue.Queue()
+        t = threading.Thread(target=self.tr_worker)
         t.daemon = True
         t.start()
 
-    def basic_worker(self):
+    def tr_worker(self):
         while True:
-            # Check order_queue
-            while not self.model.order_queue.empty():
-                logger.info('checking order_queue item')
-                item: OrderQueueItem = self.model.order_queue.get()
-                if item.type == OrderType.BUY:
-                    job = Job(self.tr_buy_order, item.code, item.quantity)
-                    self.job_queue.put(job)
-                    logger.info('put buy_order')
-                elif item.type == OrderType.SELL:
-                    job = Job(self.tr_sell_order, item.code, item.quantity)
-                    self.job_queue.put(job)
-                    logger.info('put sell_order')
-                else:
-                    logger.error(f'unexpected item!!! {item.type} {item.code} {item.quantity} {item.strategy_name}')
-                self.model.order_queue.task_done()
-            if not self.job_queue.empty():
-                f = self.job_queue.get()
-                f()
-                time.sleep(0.2)
-            time.sleep(0.1)
+            f = self.tr_queue.get()
+            ret = f()
+            logger.info(f'{f.fn.__name__}{f.args}. ret:{ret}')
+            self.tr_queue.task_done()
+            time.sleep(0.2)
 
-    def comm_connect(self):
-        self.ocx.comm_connect()
+    def tr_connect(self):
+        # self.ocx.comm_connect()
+        job = Job(self.ocx.comm_connect)
+        logger.info(f'tr_connect(). put')
+        self.tr_queue.put(job)
 
     def get_master_code_name(self, code):
         return self.ocx.get_master_code_name(code)
 
     def get_connect_state(self):
-        return self.get_connect_state()
+        return self.ocx.get_connect_state()
 
-    def get_condition_load_async(self):
+    def tr_load_condition_list(self):
         """HTS 에 저장된 condition 불러옴
 
         :return: 1(성공)
         :callback: _on_receive_condition_ver()
         """
-        return self.ocx.get_condition_load_async()
+        # return self.ocx.get_condition_load_async()
+        job = Job(self.ocx.get_condition_load_async)
+        logger.info(f'tr_load_condition_list(). put')
+        self.tr_queue.put(job)
 
-    def send_condition_async(self, screen_num: str, condition_name: str, condition_index: int, query_type: int):
-        """ condition 만족하는 종목 조회 or 실시간 등록
+    def tr_check_condition(self, condition: Condition):
+        query_type = 0  # 일반조회
+        # return self.ocx.send_condition_async(ScreenNo.CONDITION.value, condition.name, condition.index, query_type)
+        job = Job(self.ocx.send_condition_async, ScreenNo.CONDITION.value, condition.name, condition.index, query_type)
+        logger.info(f'tr_check_condition(). put')
+        self.tr_queue.put(job)
 
-        :param screen_num:
-        :param condition_name:
-        :param condition_index:
-        :param query_type: 조회구분(0:일반조회, 1:실시간조회, 2:연속조회)
-        :return: 성공 1, 실패 0
-        :callback: _on_receive_tr_condition()
+    def tr_register_condition(self, condition: Condition):
+        query_type = 1  # 실시간조회
+        # return self.ocx.send_condition_async(ScreenNo.CONDITION.value, condition.name, condition.index, query_type)
+        job = Job(self.ocx.send_condition_async, ScreenNo.CONDITION.value, condition.name, condition.index, query_type)
+        logger.info(f'tr_register_condition(). put')
+        self.tr_queue.put(job)
+
+    def tr_multi_code_detail(self, the_code_list: list):
+        """ 복수 종목에 대한 기본 정보 요청
         """
-        return self.ocx.send_condition_async(screen_num, condition_name, condition_index, query_type)
-
-    def comm_kw_rq_data_async(self, the_code_list: list):
-        """ 복수종목조회 Tran 을 서버로 송신한다
-        :callback: _on_receive_tr_data()
-        """
-        self.ocx.comm_kw_rq_data_async(the_code_list)
+        # self.ocx.comm_kw_rq_data_async(the_code_list)
+        job = Job(self.ocx.comm_kw_rq_data_async, the_code_list)
+        logger.info(f'tr_multi_code_detail(). put')
+        self.tr_queue.put(job)
 
     def set_real_reg(self, the_code_list: list):
         self.ocx.set_real_reg(the_code_list)
 
-    def request_account_detail(self):
-        self.ocx.request_account_detail()
+    def tr_account_detail(self):
+        # self.ocx.request_account_detail()
+        job = Job(self.ocx.request_account_detail)
+        logger.info(f'tr_account_detail(). put')
+        self.tr_queue.put(job)
 
-    def request_code_info(self, the_code):
-        self.ocx.request_code_info(the_code)
+    def tr_code_info(self, the_code):
+        # self.ocx.request_code_info(the_code)
+        job = Job(self.ocx.request_code_info, the_code)
+        logger.info(f'tr_code_info(). put')
+        self.tr_queue.put(job)
 
     def tr_buy_order(self, the_code, the_quantity):
         logger.info(f'tr_buy_order(). the_code:{the_code}, the_quantity:{the_quantity}')
@@ -115,8 +116,12 @@ class Kiwoom:
         price = 0
         hoga_gb = '03'  # 시장가
         org_order_no = ''
-        self.ocx.send_order(RqName.ORDER.value, ScreenNo.ORDER.value, self.model.account, order_type, the_code,
-                            the_quantity, price, hoga_gb, org_order_no)
+        # self.ocx.send_order(RqName.ORDER.value, ScreenNo.ORDER.value, self.model.account, order_type, the_code,
+        #                     the_quantity, price, hoga_gb, org_order_no)
+        job = Job(self.ocx.send_order, RqName.ORDER.value, ScreenNo.ORDER.value, self.model.account, order_type,
+                  the_code, the_quantity, price, hoga_gb, org_order_no)
+        logger.info(f'tr_buy_order(). put')
+        self.tr_queue.put(job)
 
     def tr_sell_order(self, the_code, the_quantity):
         logger.info(f'tr_sell_order(). the_code:{the_code}, the_quantity:{the_quantity}')
@@ -124,8 +129,12 @@ class Kiwoom:
         price = 0
         hoga_gb = '03'  # 시장가
         org_order_no = ''
-        self.ocx.send_order(RqName.ORDER.value, ScreenNo.ORDER.value, self.model.account, order_type, the_code,
-                            the_quantity, price, hoga_gb, org_order_no)
+        # self.ocx.send_order(RqName.ORDER.value, ScreenNo.ORDER.value, self.model.account, order_type, the_code,
+        #                     the_quantity, price, hoga_gb, org_order_no)
+        job = Job(self.ocx.send_order, RqName.ORDER.value, ScreenNo.ORDER.value, self.model.account, order_type,
+                  the_code, the_quantity, price, hoga_gb, org_order_no)
+        logger.info(f'tr_sell_order(). put')
+        self.tr_queue.put(job)
 
 
 if __name__ == "__main__":
@@ -149,30 +158,36 @@ if __name__ == "__main__":
             logger.info(f"on_data_updated. {data_type}")
             event_loop.exit()
 
+        def on_buy_signal(self, code: str, qty: int):
+            logger.info(f'on_buy_signal. code:{code}, qty:{qty}')
+
+        def on_sell_signal(self, code: str, qty: int):
+            logger.info(f'on_sell_signal. code:{code}, qty:{qty}')
+
 
     app = QApplication(sys.argv)
     tempWindow = QMainWindow()
     tempModelListener = TempModelListener()
     model = Model()
-    model.set_listener(tempModelListener)
+    model.add_listener(tempModelListener)
     kiwoom_api = Kiwoom(model)
 
     from PyQt5.QtCore import QEventLoop
 
     event_loop = QEventLoop()
 
-    kiwoom_api.comm_connect()
+    kiwoom_api.tr_connect()
     event_loop.exec_()
 
-    kiwoom_api.get_condition_load_async()
+    kiwoom_api.tr_load_condition_list()
     event_loop.exec_()
 
-    condition_name_dic = model.get_condition_name_dic()
-    kiwoom_api.send_condition_async('1111', condition_name_dic[1], 1, 0)
+    target_condition = model.condition_list[0]
+    kiwoom_api.tr_check_condition(target_condition)
     event_loop.exec_()
 
     input_code_list = ['004540', '005360', '053110']
-    kiwoom_api.comm_kw_rq_data_async(input_code_list)
+    kiwoom_api.tr_multi_code_detail(input_code_list)
     event_loop.exec_()
 
     kiwoom_api.set_real_reg(input_code_list)

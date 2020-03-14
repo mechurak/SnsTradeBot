@@ -2,6 +2,7 @@ import enum
 
 
 class ScreenNo(enum.Enum):
+    CONDITION = '1111'  # 조건식
     REAL = '2222'  # 실시간 조회
     INTEREST = '3333'  # 관심종목 조회
     BALANCE = '4444'  # 계좌평가현황요청
