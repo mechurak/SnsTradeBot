@@ -20,16 +20,18 @@ class ModelListener:
     def on_data_updated(self, data_type: DataType):
         pass
 
+    @abstractmethod
     def on_buy_signal(self, code: str,  qty: int):
         pass
 
+    @abstractmethod
     def on_sell_signal(self, code: str,  qty: int):
         pass
 
 
 class Stock:
-    def __init__(self, the_listener: ModelListener, the_code: str, the_name: str = 'UNDEFINED', the_cur_price: int = 0):
-        self.listener = the_listener
+    def __init__(self, the_listener_list: list, the_code: str, the_name: str = 'UNDEFINED', the_cur_price: int = 0):
+        self.listener_list = the_listener_list
         self.code = the_code  # 종목코드
         self.name = the_name  # 종목명
         self.cur_price = the_cur_price  # 현재가
@@ -83,11 +85,13 @@ class Stock:
 
     def on_buy_signal(self, the_strategy_name: str, the_order_quantity: int):
         logger.info(f'buy_signal!! {self.name}. strategy:{the_strategy_name}, qty:{the_order_quantity}')
-        self.listener.on_buy_signal(self.code, the_order_quantity)
+        for listener in self.listener_list:
+            listener.on_buy_signal(self.code, the_order_quantity)
 
     def on_sell_signal(self, the_strategy_name: str, the_order_quantity: int):
         logger.info(f'sell_signal!! {self.name}. strategy:{the_strategy_name}, qty:{the_order_quantity}')
-        self.listener.on_sell_signal(self.code, the_order_quantity)
+        for listener in self.listener_list:
+            listener.on_sell_signal(self.code, the_order_quantity)
 
 
 class Condition:
@@ -166,7 +170,7 @@ class Model:
 
     def get_stock(self, the_code) -> Stock:
         if the_code not in self.stock_dic:
-            self.stock_dic[the_code] = Stock(self.order_queue, the_code)
+            self.stock_dic[the_code] = Stock(self.listener_list, the_code)
             logger.debug("new code '%s'. create new stock", the_code)
         return self.stock_dic[the_code]
 

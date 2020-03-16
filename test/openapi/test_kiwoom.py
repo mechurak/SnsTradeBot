@@ -38,34 +38,29 @@ class TestKiwoom(unittest.TestCase):
     def test_job_queue(self):
         logger.info('test for job_queue()')
 
-        def temp_buy_order(the_code, the_quantity):
-            logger.info(f'temp_buy_order(). the_code:{the_code}, the_quantity:{the_quantity}')
-            return None
+        def temp_send_order(rq_name: str, screen_no: str, acc_no: str, order_type: int, code: str, qty: int, price: int,
+                   hoga_gb: str, org_order_no: str):
+            logger.info(f'send_order(). order_type:{order_type}, code:{code}, qty:{qty}')
+            return 1
 
-        def temp_sell_order(the_code, the_quantity):
-            logger.info(f'temp_sell_order(). the_code:{the_code}, the_quantity:{the_quantity}')
-            return None
-
-        self.kiwoom_api.tr_buy_order = Mock(side_effects=temp_buy_order)
-        self.kiwoom_api.tr_sell_order = Mock(side_effects=temp_sell_order)
+        self.kiwoom_api.ocx.send_order = Mock(side_effects=temp_send_order)
+        self.kiwoom_api.ocx.send_order.__name__ = 'temp_send_order'
 
         stock0001 = self.model.get_stock('0001')
         stock0001.name = '테스트종목'
         stock0002 = self.model.get_stock('0002')
         stock0002.name = 'temp종목'
-        stock0001.on_buy_signal('temp_buy_strategy', 10)
-        stock0001.on_sell_signal('temp_sell_strategy', 15)
-        stock0002.on_sell_signal('temp_sell_strategy2', 25)
-        self.assertEqual(3, self.model.order_queue.qsize())
+
+        # when
+        self.kiwoom_api.tr_buy_order('0001', 3)
+        self.kiwoom_api.tr_sell_order('0002', 2)
 
         # when
         time.sleep(3)
 
         # then
-        self.kiwoom_api.tr_buy_order.assert_called()
-        logger.info(f'buy_order call_count: {self.kiwoom_api.tr_buy_order.call_count}')
-        self.kiwoom_api.tr_sell_order.assert_called()
-        logger.info(f'sell_order call_count: {self.kiwoom_api.tr_sell_order.call_count}')
+        self.kiwoom_api.ocx.send_order.assert_called()
+        logger.info(f'buy_order call_count: {self.kiwoom_api.ocx.send_order.call_count}')
 
 
 if __name__ == '__main__':

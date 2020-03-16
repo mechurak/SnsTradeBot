@@ -197,6 +197,13 @@ class MainWindow(QMainWindow, ModelListener):
             stock.target_quantity = target_qty
             logger.info(f'{code}: {target_qty}')
 
+    # ModelListener
+    def on_buy_signal(self, code: str, qty: int):
+        pass
+
+    def on_sell_signal(self, code: str, qty: int):
+        pass
+
     def on_data_updated(self, data_type: DataType):
         logger.info(f"data_type: {data_type}")
         if data_type == DataType.COMBO_ACCOUNT:
@@ -205,7 +212,8 @@ class MainWindow(QMainWindow, ModelListener):
             self.combo_account.setCurrentIndex(self.ui.combo_account.findText(self.model.account))
         elif data_type == DataType.TABLE_BALANCE:
             header = ["종목코드", "종목명", "현재가", "매입가", "보유수량", "목표보유수량", "수익률", "매수전략", "매도전략"]
-            self.table_balance.reset()
+            self.table_balance.setSortingEnabled(False)
+            self.table_balance.clear()
             self.table_balance.setColumnCount(len(header))
             self.table_balance.setHorizontalHeaderLabels(header)
             self.table_balance.setRowCount(len(self.model.stock_dic))
@@ -219,6 +227,7 @@ class MainWindow(QMainWindow, ModelListener):
                 self.table_balance.setItem(i, 6, QTableWidgetItem(str(stock.earning_rate)))
                 self.table_balance.setItem(i, 7, QTableWidgetItem(str(list(stock.buy_strategy_dic.keys()))))
                 self.table_balance.setItem(i, 8, QTableWidgetItem(str(list(stock.sell_strategy_dic.keys()))))
+            self.table_balance.setSortingEnabled(True)
         elif data_type == DataType.TABLE_CONDITION:
             header = ["인덱스", "조건명", "신호종류", "적용유무", "요청버튼"]
             self.table_condition.setColumnCount(len(header))
