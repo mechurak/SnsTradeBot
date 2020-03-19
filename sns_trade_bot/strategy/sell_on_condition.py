@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 class SellOnCondition(StrategyBase):
     NAME = 'sell_on_condition'
-    DEFAULT_THRESHOLD = 0.01  # 1% 이상 수익이 아니라면 팔지 않음
+    DEFAULT_THRESHOLD = 1.0  # 1% 이상 수익이 아니라면 팔지 않음
     DEFAULT_PARAM = {'threshold': DEFAULT_THRESHOLD}
 
     def __init__(self, the_stock, the_param_dic):
@@ -33,7 +33,7 @@ class SellOnCondition(StrategyBase):
             logger.info("quantity == 0. do nothing")
             return
 
-        earning_rate = self.stock.get_return_rate()
+        earning_rate = self.stock.get_cur_earning_rate()
         logger.info("name: %s, earning_rate: %f, cur_price: %d, buy_price: %d, quantity: %d", self.stock.name, earning_rate, self.stock.cur_price, self.stock.buy_price, self.stock.quantity)
 
         if earning_rate > self.threshold:

@@ -5,6 +5,7 @@ import json
 import queue
 import sys
 from abc import abstractmethod
+from sns_trade_bot.model.stock import Stock
 
 logger = logging.getLogger(__name__)
 
@@ -30,71 +31,6 @@ class ModelListener:
         pass
 
 
-class Stock:
-    def __init__(self, the_listener_list: list, the_code: str, the_name: str = 'UNDEFINED', the_cur_price: int = 0):
-        self.listener_list = the_listener_list
-        self.code = the_code  # 종목코드
-        self.name = the_name  # 종목명
-        self.cur_price = the_cur_price  # 현재가
-        self.buy_price: int = 0  # 매입가
-        self.quantity: int = 0  # 보유수량
-        self.earning_rate: float = 0.0  # 수익률
-        self.buy_strategy_dic: dict = {}
-        self.sell_strategy_dic: dict = {}
-        self.target_quantity: int = 0  # 목표보유수량
-
-    def __str__(self):
-        return f'({self.code} {self.name} {self.cur_price} {self.buy_price} {self.quantity} ' \
-               f'{list(self.buy_strategy_dic.keys())} {list(self.sell_strategy_dic.keys())} {self.target_quantity})'
-
-    def get_dic(self):
-        ret = {
-            "code": self.code,
-            "name": self.name,
-            "buy_strategy_dic": {},
-            "sell_strategy_dic": {},
-            "target_quantity": self.target_quantity
-        }
-        for k, v in self.buy_strategy_dic.items():
-            ret['buy_strategy_dic'][k] = v.get_param_dic()
-        for k, v in self.sell_strategy_dic.items():
-            ret['sell_strategy_dic'][k] = v.get_param_dic()
-        return ret
-
-    def add_buy_strategy(self, the_strategy_name, the_param_dic):
-        from sns_trade_bot.strategy.buy_just_buy import BuyJustBuy
-        from sns_trade_bot.strategy.buy_on_opening import BuyOnOpening
-        if the_strategy_name == 'buy_just_buy':
-            self.buy_strategy_dic[the_strategy_name] = BuyJustBuy(self, the_param_dic)
-        elif the_strategy_name == 'buy_on_opening':
-            self.buy_strategy_dic[the_strategy_name] = BuyOnOpening(self, the_param_dic)
-        else:
-            logger.error(f'unknown buy strategy "{the_strategy_name}" for "{self.name}"')
-
-    def add_sell_strategy(self, the_strategy_name, the_param_dic):
-        from sns_trade_bot.strategy.sell_on_closing import SellOnClosing
-        from sns_trade_bot.strategy.sell_stop_loss import SellStopLoss
-        from sns_trade_bot.strategy.sell_on_condition import SellOnCondition
-        if the_strategy_name == 'sell_on_closing':
-            self.sell_strategy_dic[the_strategy_name] = SellOnClosing(self, the_param_dic)
-        elif the_strategy_name == 'sell_stop_loss':
-            self.sell_strategy_dic[the_strategy_name] = SellStopLoss(self, the_param_dic)
-        elif the_strategy_name == 'sell_on_condition':
-            self.sell_strategy_dic[the_strategy_name] = SellOnCondition(self, the_param_dic)
-        else:
-            logger.error(f'unknown sell strategy "{the_strategy_name}" for "{self.name}"')
-
-    def on_buy_signal(self, the_strategy_name: str, the_order_quantity: int):
-        logger.info(f'buy_signal!! {self.name}. strategy:{the_strategy_name}, qty:{the_order_quantity}')
-        for listener in self.listener_list:
-            listener.on_buy_signal(self.code, the_order_quantity)
-
-    def on_sell_signal(self, the_strategy_name: str, the_order_quantity: int):
-        logger.info(f'sell_signal!! {self.name}. strategy:{the_strategy_name}, qty:{the_order_quantity}')
-        for listener in self.listener_list:
-            listener.on_sell_signal(self.code, the_order_quantity)
-
-
 class Condition:
     def __init__(self, index, name):
         self.index = index  # 인덱스
@@ -110,7 +46,7 @@ class HoldType(enum.Enum):
     ALL = 10
 
 
-class Model:
+class DataManager:
     SAVE_FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../my_stock_list.json')
 
     order_queue: queue.Queue
@@ -145,7 +81,7 @@ class Model:
 
     def save(self):
         logger.info('save')
-        f = open(Model.SAVE_FILE_PATH, "w", encoding='utf8')
+        f = open(DataManager.SAVE_FILE_PATH, "w", encoding='utf8')
         stock_list = []
         for k, v in self.stock_dic.items():
             stock_list.append(v.get_dic())
@@ -155,7 +91,7 @@ class Model:
 
     def load(self):
         logger.info('load')
-        f = open(Model.SAVE_FILE_PATH, "r", encoding='utf8')
+        f = open(DataManager.SAVE_FILE_PATH, "r", encoding='utf8')
         stock_list = json.load(f)
         logger.info(stock_list)
         for loaded_stock in stock_list:
@@ -248,22 +184,22 @@ if __name__ == "__main__":
     stream_handler = logging.StreamHandler(stream=sys.stdout)
     logger.addHandler(stream_handler)
 
-    model = Model()
-    stock0001 = model.get_stock('0001')
+    data_manager = DataManager()
+    stock0001 = data_manager.get_stock('0001')
     stock0001.name = '테스트종목'
-    stock0002 = model.get_stock('0002')
+    stock0002 = data_manager.get_stock('0002')
     stock0002.name = 'temp종목'
-    logger.info(model)
+    logger.info(data_manager)
     stock0001.add_buy_strategy('buy_just_buy', {})
     stock0001.add_buy_strategy('buy_on_opening', {})
-    logger.info(model)
+    logger.info(data_manager)
     stock0001.add_sell_strategy('sell_on_closing', {})
     stock0001.add_sell_strategy('sell_stop_loss', {})
     stock0001.add_sell_strategy('sell_on_condition', {})
     stock0002.add_sell_strategy('sell_stop_loss', {'threshold': -0.05})
-    model.save()
-    # model.load()
-    # stock0001 = model.get_stock('0001')
+    data_manager.save()
+    # data_manager.load()
+    # stock0001 = data_manager.get_stock('0001')
     # stock0001.add_buy_strategy('temp_strategy', {})
     # stock0001.add_buy_strategy('buy_on_opening', {})
-    logger.info(model)
+    logger.info(data_manager)

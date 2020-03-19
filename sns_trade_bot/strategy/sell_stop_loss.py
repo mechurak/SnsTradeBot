@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 class SellStopLoss(StrategyBase):
     NAME = 'sell_stop_loss'
-    DEFAULT_THRESHOLD = -0.03
+    DEFAULT_THRESHOLD = -3.0  # unit: %
     DEFAULT_PARAM = {'threshold': DEFAULT_THRESHOLD}
 
     def __init__(self, the_stock, the_param_dic):
@@ -33,7 +33,7 @@ class SellStopLoss(StrategyBase):
             logger.debug("quantity == 0. do nothing")
             return
 
-        earning_rate = self.stock.get_return_rate()
+        earning_rate = self.stock.get_cur_earning_rate()
         logger.debug("name: %s, earning_rate: %f, cur_price: %d, buy_price: %d, quantity: %d", self.stock.name, earning_rate, self.stock.cur_price, self.stock.buy_price, self.stock.quantity)
 
         if earning_rate < self.threshold:

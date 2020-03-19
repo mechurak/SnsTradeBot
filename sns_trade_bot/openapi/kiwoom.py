@@ -7,7 +7,7 @@ import time
 from datetime import datetime
 
 from PyQt5.QtWidgets import *
-from sns_trade_bot.model.model import Model, DataType, ModelListener, Condition
+from sns_trade_bot.model.data_manager import DataManager, DataType, ModelListener, Condition
 from sns_trade_bot.openapi.kiwoom_common import RqName, ScreenNo
 from sns_trade_bot.openapi.kiwoom_internal import KiwoomOcx
 from sns_trade_bot.openapi.kiwoom_event import KiwoomEventHandler
@@ -26,15 +26,15 @@ class Job:
 
 
 class Kiwoom:
-    model: Model
+    data_manager: DataManager
     ocx: KiwoomOcx
     handler: KiwoomEventHandler
 
-    def __init__(self, the_model):
+    def __init__(self, the_data_manager):
         super().__init__()
-        self.model = the_model
-        self.ocx = KiwoomOcx(self.model)
-        self.handler = KiwoomEventHandler(self.model, self.ocx)
+        self.data_manager = the_data_manager
+        self.ocx = KiwoomOcx(self.data_manager)
+        self.handler = KiwoomEventHandler(self.data_manager, self.ocx)
         self.ocx.set_event_handler(self.handler)
 
         self.tr_queue = queue.Queue()
@@ -116,9 +116,9 @@ class Kiwoom:
         price = 0
         hoga_gb = '03'  # 시장가
         org_order_no = ''
-        # self.ocx.send_order(RqName.ORDER.value, ScreenNo.ORDER.value, self.model.account, order_type, the_code,
+        # self.ocx.send_order(RqName.ORDER.value, ScreenNo.ORDER.value, self.data_manager.account, order_type, the_code,
         #                     the_quantity, price, hoga_gb, org_order_no)
-        job = Job(self.ocx.send_order, RqName.ORDER.value, ScreenNo.ORDER.value, self.model.account, order_type,
+        job = Job(self.ocx.send_order, RqName.ORDER.value, ScreenNo.ORDER.value, self.data_manager.account, order_type,
                   the_code, the_quantity, price, hoga_gb, org_order_no)
         logger.info(f'tr_buy_order(). put')
         self.tr_queue.put(job)
@@ -129,9 +129,9 @@ class Kiwoom:
         price = 0
         hoga_gb = '03'  # 시장가
         org_order_no = ''
-        # self.ocx.send_order(RqName.ORDER.value, ScreenNo.ORDER.value, self.model.account, order_type, the_code,
+        # self.ocx.send_order(RqName.ORDER.value, ScreenNo.ORDER.value, self.data_manager.account, order_type, the_code,
         #                     the_quantity, price, hoga_gb, org_order_no)
-        job = Job(self.ocx.send_order, RqName.ORDER.value, ScreenNo.ORDER.value, self.model.account, order_type,
+        job = Job(self.ocx.send_order, RqName.ORDER.value, ScreenNo.ORDER.value, self.data_manager.account, order_type,
                   the_code, the_quantity, price, hoga_gb, org_order_no)
         logger.info(f'tr_sell_order(). put')
         self.tr_queue.put(job)
@@ -168,9 +168,9 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     tempWindow = QMainWindow()
     tempModelListener = TempModelListener()
-    model = Model()
-    model.add_listener(tempModelListener)
-    kiwoom_api = Kiwoom(model)
+    data_manager = DataManager()
+    data_manager.add_listener(tempModelListener)
+    kiwoom_api = Kiwoom(data_manager)
 
     from PyQt5.QtCore import QEventLoop
 
@@ -182,7 +182,7 @@ if __name__ == "__main__":
     kiwoom_api.tr_load_condition_list()
     event_loop.exec_()
 
-    target_condition = model.condition_list[0]
+    target_condition = data_manager.condition_list[0]
     kiwoom_api.tr_check_condition(target_condition)
     event_loop.exec_()
 

@@ -6,7 +6,7 @@ from unittest.mock import Mock
 
 from PyQt5.QtWidgets import *
 from sns_trade_bot.openapi.kiwoom import Kiwoom
-from sns_trade_bot.model.model import Model, ModelListener, DataType
+from sns_trade_bot.model.data_manager import DataManager, ModelListener, DataType
 
 logger = logging.getLogger()
 logger.level = logging.DEBUG
@@ -27,9 +27,9 @@ class TestKiwoom(unittest.TestCase):
         self.app = QApplication(sys.argv)
         self.tempWindow = QMainWindow()
         self.tempModelListener = TempModelListener()
-        self.model = Model()
-        self.model.add_listener(self.tempModelListener)
-        self.kiwoom_api = Kiwoom(self.model)
+        self.data_manager = DataManager()
+        self.data_manager.add_listener(self.tempModelListener)
+        self.kiwoom_api = Kiwoom(self.data_manager)
 
     def tearDown(self):
         logger.info('tearDown')
@@ -46,9 +46,9 @@ class TestKiwoom(unittest.TestCase):
         self.kiwoom_api.ocx.send_order = Mock(side_effects=temp_send_order)
         self.kiwoom_api.ocx.send_order.__name__ = 'temp_send_order'
 
-        stock0001 = self.model.get_stock('0001')
+        stock0001 = self.data_manager.get_stock('0001')
         stock0001.name = '테스트종목'
-        stock0002 = self.model.get_stock('0002')
+        stock0002 = self.data_manager.get_stock('0002')
         stock0002.name = 'temp종목'
 
         # when

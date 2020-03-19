@@ -6,7 +6,7 @@ from unittest.mock import Mock
 from PyQt5.QtWidgets import *
 from sns_trade_bot.openapi.kiwoom import Kiwoom
 from sns_trade_bot.openapi.kiwoom_common import ScreenNo, RqName
-from sns_trade_bot.model.model import Model, ModelListener, DataType
+from sns_trade_bot.model.data_manager import DataManager, ModelListener, DataType
 
 logger = logging.getLogger()
 logger.level = logging.DEBUG
@@ -18,7 +18,13 @@ logger.addHandler(stream_handler)
 
 class TempModelListener(ModelListener):
     def on_data_updated(self, data_type: DataType):
-        logger.info(f"on_data_update. {data_type}")
+        logger.info(f'on_data_update. {data_type}')
+
+    def on_buy_signal(self, code: str, qty: int):
+        logger.info(f'on_buy_signal. {code} {qty}')
+
+    def on_sell_signal(self, code: str, qty: int):
+        logger.info(f'on_sell_signal. {code} {qty}')
 
 
 class TestKiwoom(unittest.TestCase):
@@ -27,9 +33,9 @@ class TestKiwoom(unittest.TestCase):
         self.app = QApplication(sys.argv)
         self.tempWindow = QMainWindow()
         self.tempModelListener = TempModelListener()
-        self.model = Model()
-        self.model.add_listener(self.tempModelListener)
-        self.kiwoom_api = Kiwoom(self.model)
+        self.data_manager = DataManager()
+        self.data_manager.add_listener(self.tempModelListener)
+        self.kiwoom_api = Kiwoom(self.data_manager)
 
     def tearDown(self):
         logger.info('tearDown')
@@ -53,8 +59,8 @@ class TestKiwoom(unittest.TestCase):
                                                    '0', '', '', '', '')
 
         # then
-        self.assertIsNotNone(self.model.stock_dic['23333'])
-        self.assertEqual(self.model.stock_dic['23333'].cur_price, 21000)
+        self.assertIsNotNone(self.data_manager.stock_dic['23333'])
+        self.assertEqual(self.data_manager.stock_dic['23333'].cur_price, 21000)
 
     def test_on_receive_tr_data_balance(self):
         logger.info('test for _on_receive_tr_data() (RQ_BALANCE)')
@@ -107,12 +113,12 @@ class TestKiwoom(unittest.TestCase):
                                                    '0', '', '', '', '')
 
         # then
-        self.assertIsNotNone(self.model.stock_dic['005930'])
-        self.assertEqual(self.model.stock_dic['005930'].cur_price, 54200)
-        self.assertEqual(self.model.stock_dic['005930'].earning_rate, -3.04)
-        self.assertIsNotNone(self.model.stock_dic['096530'])
-        self.assertEqual(self.model.stock_dic['096530'].cur_price, 37200)
-        self.assertEqual(self.model.stock_dic['096530'].earning_rate, -1.4688)
+        self.assertIsNotNone(self.data_manager.stock_dic['005930'])
+        self.assertEqual(self.data_manager.stock_dic['005930'].cur_price, 54200)
+        self.assertEqual(self.data_manager.stock_dic['005930'].earning_rate, -3.04)
+        self.assertIsNotNone(self.data_manager.stock_dic['096530'])
+        self.assertEqual(self.data_manager.stock_dic['096530'].cur_price, 37200)
+        self.assertEqual(self.data_manager.stock_dic['096530'].earning_rate, -1.4688)
 
 
 if __name__ == '__main__':

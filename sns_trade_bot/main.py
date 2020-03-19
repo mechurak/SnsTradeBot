@@ -5,7 +5,7 @@ from datetime import datetime
 from PyQt5.QtWidgets import QApplication
 from sns_trade_bot.ui.main_window import MainWindow, UiListener
 from sns_trade_bot.openapi.kiwoom import Kiwoom
-from sns_trade_bot.model.model import Model, HoldType, ModelListener, DataType
+from sns_trade_bot.model.data_manager import DataManager, HoldType, ModelListener, DataType
 import sns_trade_bot.slack.run
 import threading
 
@@ -30,19 +30,19 @@ logger.info(f'file_name: {file_name}')
 
 
 class Manager(UiListener, ModelListener):
-    model: Model
+    data_manager: DataManager
     main_window: MainWindow
     kiwoom_api: Kiwoom
 
-    def __init__(self, the_model, the_main_window, the_kiwoom_api):
-        self.model = the_model
+    def __init__(self, the_data_manager, the_main_window, the_kiwoom_api):
+        self.data_manager = the_data_manager
         self.main_window = the_main_window
         self.kiwoom_api = the_kiwoom_api
 
     # UiListener
     def account_changed(self, the_account):
         logger.info("account_changed. the_account: %s", the_account)
-        self.model.set_account(the_account)
+        self.data_manager.set_account(the_account)
 
     def btn_balance_clicked(self):
         logger.info("btn_balance_clicked")
@@ -50,12 +50,12 @@ class Manager(UiListener, ModelListener):
 
     def btn_interest_balance_clicked(self):
         logger.info('btn_interest_balance_clicked')
-        interest_code_list = self.model.get_code_list(HoldType.INTEREST)
+        interest_code_list = self.data_manager.get_code_list(HoldType.INTEREST)
         self.kiwoom_api.tr_multi_code_detail(interest_code_list)
 
     def btn_real_clicked(self):
         logger.info('btn_real_clicked')
-        target_code_list = self.model.get_code_list(HoldType.TARGET)
+        target_code_list = self.data_manager.get_code_list(HoldType.TARGET)
         self.kiwoom_api.set_real_reg(target_code_list)
 
     def btn_code_add_clicked(self, code):
@@ -92,12 +92,12 @@ if __name__ == "__main__":
     t.start()
 
     app = QApplication(sys.argv)
-    model = Model()
-    main_window = MainWindow(model)
-    kiwoom_api = Kiwoom(model)
+    data_manager = DataManager()
+    main_window = MainWindow(data_manager)
+    kiwoom_api = Kiwoom(data_manager)
 
-    manager = Manager(model, main_window, kiwoom_api)
-    model.add_listener(manager)
+    manager = Manager(data_manager, main_window, kiwoom_api)
+    data_manager.add_listener(manager)
     main_window.set_listener(manager)
     kiwoom_api.tr_connect()
 

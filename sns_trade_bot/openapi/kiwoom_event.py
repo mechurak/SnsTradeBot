@@ -1,6 +1,7 @@
 import logging
 
-from sns_trade_bot.model.model import Model, DataType, Stock
+from sns_trade_bot.model.data_manager import DataManager, DataType
+from sns_trade_bot.model.stock import Stock
 from sns_trade_bot.openapi.kiwoom_common import ScreenNo, RqName, EventHandler, TrResultKey
 from sns_trade_bot.openapi.kiwoom_internal import KiwoomOcx
 
@@ -8,11 +9,11 @@ logger = logging.getLogger(__name__)
 
 
 class KiwoomEventHandler(EventHandler):
-    model: Model
+    data_manager: DataManager
     ocx: KiwoomOcx
 
-    def __init__(self, the_model, the_ocx):
-        self.model = the_model
+    def __init__(self, the_data_manager, the_ocx):
+        self.data_manager = the_data_manager
         self.ocx = the_ocx
 
     def on_event_connect(self, err_code):
@@ -22,7 +23,7 @@ class KiwoomEventHandler(EventHandler):
             account_num = account_num[:-1]
             account_list = account_num.split(";")
             logger.info("account_list: %s", account_list)
-            self.model.set_account_list(account_list)
+            self.data_manager.set_account_list(account_list)
         else:
             logger.info("disconnected")
 
@@ -41,12 +42,12 @@ class KiwoomEventHandler(EventHandler):
                 price_str = self.ocx.get_comm_data(tr_code, record_name, i, '현재가')
                 price = int(price_str)
                 price = price if price >= 0 else price * (-1)
-                stock = self.model.get_stock(code)
+                stock = self.data_manager.get_stock(code)
                 stock.name = name
                 stock.cur_price = price
                 logger.info(f'code:{code}, name:{name}, price:{price}')
             self.ocx.disconnect_real_data(ScreenNo.INTEREST)
-            self.model.set_updated(DataType.TABLE_BALANCE)
+            self.data_manager.set_updated(DataType.TABLE_BALANCE)
         elif rq_name == RqName.BALANCE.value:
             self.print_tr_data(tr_code, record_name, 0, TrResultKey.BALANCE_SINGLE)
             account_name = self.ocx.get_comm_data(tr_code, record_name, 0, '계좌명')
@@ -64,7 +65,7 @@ class KiwoomEventHandler(EventHandler):
             logger.info(f'account_name:{account_name}, cur_balance:{cur_balance}, cash:{cash}, cash2:{cash2}, '
                         f'buy_total:{buy_total}, print_count:{print_count}, count:{count}')
             for i in range(count):
-                self.print_tr_data(tr_code, record_name, 0, TrResultKey.BALANCE_MULTI)
+                self.print_tr_data(tr_code, record_name, i, TrResultKey.BALANCE_MULTI)
                 code_raw = self.ocx.get_comm_data(tr_code, record_name, i, '종목코드')  # A096530
                 name = self.ocx.get_comm_data(tr_code, record_name, i, '종목명')  # 씨젠
                 quantity_str = self.ocx.get_comm_data(tr_code, record_name, i, '보유수량')  # 000000000010
@@ -78,13 +79,13 @@ class KiwoomEventHandler(EventHandler):
                 earning_rate = float(earning_rate_str) / 10000
                 logger.info(f'code:{code}, name:{name}, quantity:{quantity}, buy_price:{buy_price}, '
                             f'cur_price:{cur_price}, earning_rate:{earning_rate}')
-                stock = self.model.get_stock(code)
+                stock = self.data_manager.get_stock(code)
                 stock.name = name
                 stock.cur_price = cur_price
                 stock.quantity = quantity
                 stock.buy_price = buy_price
                 stock.earning_rate = earning_rate
-            self.model.set_updated(DataType.TABLE_BALANCE)
+            self.data_manager.set_updated(DataType.TABLE_BALANCE)
         elif rq_name == RqName.CODE_INFO.value:
             self.print_tr_data(tr_code, record_name, 0, TrResultKey.CODE_SINGLE)
             code = self.ocx.get_comm_data(tr_code, record_name, 0, '종목코드').strip()
@@ -93,11 +94,11 @@ class KiwoomEventHandler(EventHandler):
             if code and name and price_str:
                 price = int(price_str)
                 price = price if price >= 0 else price * (-1)
-                stock = self.model.get_stock(code)
+                stock = self.data_manager.get_stock(code)
                 stock.name = name
                 stock.cur_price = price
                 logger.info(f'code:{code}, name:{name}, price:{price}')
-                self.model.set_updated(DataType.TABLE_BALANCE)
+                self.data_manager.set_updated(DataType.TABLE_BALANCE)
             else:
                 logger.error("error!!")
 
@@ -110,7 +111,7 @@ class KiwoomEventHandler(EventHandler):
             price_str = self.ocx.get_comm_real_data(code, 10)
             cur_price = int(price_str)
             cur_price = cur_price if cur_price >= 0 else cur_price * (-1)
-            stock = self.model.get_stock(code)
+            stock = self.data_manager.get_stock(code)
             stock.cur_price = cur_price
             for strategy in stock.sell_strategy_dic.values():
                 strategy.on_price_updated()
@@ -151,14 +152,14 @@ class KiwoomEventHandler(EventHandler):
             qty = int(self.ocx.get_chejan_data(930))  # 보유수량
             if qty == 0:
                 logger.info(f'{name}({code}) 청산 완료!!')
-                self.model.remove_stock(code)
+                self.data_manager.remove_stock(code)
                 self.ocx.set_real_remove(ScreenNo.REAL.value, code)
 
     def on_receive_condition_ver(self, ret: int, msg: str):
         logger.debug(f'ret: {ret}, msg: {msg}')  # ret: 사용자 조건식 저장 성공여부 (1: 성공, 나머지 실패)
         condition_name_dic = self.ocx.get_condition_name_list()
         logger.debug(condition_name_dic)
-        self.model.set_condition_list(condition_name_dic)
+        self.data_manager.set_condition_list(condition_name_dic)
 
     def on_receive_tr_condition(self, scr_no, str_code_list, str_condition_name, index, has_next):
         logger.debug(f'{scr_no} {str_code_list} {str_condition_name} {index} {has_next}')
@@ -168,9 +169,9 @@ class KiwoomEventHandler(EventHandler):
         temp_stock_list = []
         for code in code_list:
             name = self.ocx.get_master_code_name([code])
-            temp_stock_list.append(Stock(self.model.order_queue, code, name))
+            temp_stock_list.append(Stock(self.data_manager.order_queue, code, name))
             logger.debug("code: %s, name: %s", code, name)
-        self.model.set_temp_stock_list(temp_stock_list)
+        self.data_manager.set_temp_stock_list(temp_stock_list)
 
     def print_tr_data(self, tr_code, record_name, index, item_list):
         logger.debug(f'---- tr_code: {tr_code}, record_name: {record_name}, index: {index}')

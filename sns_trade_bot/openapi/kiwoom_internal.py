@@ -1,18 +1,18 @@
 import logging
 
 from PyQt5.QAxContainer import *
-from sns_trade_bot.model.model import Model
+from sns_trade_bot.model.data_manager import DataManager
 from sns_trade_bot.openapi.kiwoom_common import ScreenNo, RqName, EventHandler
 
 logger = logging.getLogger(__name__)
 
 
 class KiwoomOcx(QAxWidget):
-    model: Model
+    data_manager: DataManager
 
-    def __init__(self, the_model):
+    def __init__(self, the_data_manager):
         super().__init__()
-        self.model = the_model
+        self.data_manager = the_data_manager
         self.setControl("KHOPENAPI.KHOpenAPICtrl.1")
 
     def set_event_handler(self, event_handler: EventHandler):
@@ -182,8 +182,8 @@ class KiwoomOcx(QAxWidget):
         logger.info(f'DisconnectRealData(). ret: {ret}')
 
     def request_account_detail(self):
-        logger.info(f'account: {self.model.account}')
-        self.set_input_value('계좌번호', self.model.account)
+        logger.info(f'account: {self.data_manager.account}')
+        self.set_input_value('계좌번호', self.data_manager.account)
         self.set_input_value('비밀번호', '')  # 사용안함(공백)
         self.set_input_value('상장폐지조회구분', '0')  # 0:전체, 1: 상장폐지종목제외
         self.set_input_value('비밀번호입력매체구분', '00')  # 고정값?
