@@ -3,6 +3,7 @@ import logging
 import os
 import json
 import queue
+import sys
 from abc import abstractmethod
 
 logger = logging.getLogger(__name__)
@@ -244,7 +245,7 @@ class Model:
 if __name__ == "__main__":
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
-    stream_handler = logging.StreamHandler()
+    stream_handler = logging.StreamHandler(stream=sys.stdout)
     logger.addHandler(stream_handler)
 
     model = Model()

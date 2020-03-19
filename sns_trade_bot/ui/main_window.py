@@ -259,7 +259,7 @@ class MainWindow(QMainWindow, ModelListener):
 if __name__ == "__main__":
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
-    stream_handler = logging.StreamHandler()
+    stream_handler = logging.StreamHandler(stream=sys.stdout)
     logger.addHandler(stream_handler)
 
     model = Model()

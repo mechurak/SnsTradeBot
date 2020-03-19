@@ -12,14 +12,14 @@ import threading
 # Setup root logger
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s [%(levelname)s|%(filename)s:%(lineno)s(%(funcName)s)] %(message)s')
+formatter = logging.Formatter('%(asctime)s[%(levelname)8s](%(filename)20s:%(lineno)-4s %(funcName)-35s) %(message)s')
 LOG_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../log")
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
 file_name = LOG_DIR + "/" + datetime.now().strftime("%Y%m%d-%H%M%S") + ".log"
 
 file_handler = logging.FileHandler(file_name, "a", "utf-8")
-stream_handler = logging.StreamHandler()
+stream_handler = logging.StreamHandler(stream=sys.stdout)
 file_handler.setFormatter(formatter)
 stream_handler.setFormatter(formatter)
 

@@ -146,7 +146,7 @@ if __name__ == "__main__":
         os.makedirs(LOG_DIR)
     file_name = LOG_DIR + "/" + datetime.now().strftime("%Y%m%d-%H%M%S") + ".log"
     file_handler = logging.FileHandler(file_name, "a", "utf-8")
-    stream_handler = logging.StreamHandler()
+    stream_handler = logging.StreamHandler(stream=sys.stdout)
     file_handler.setFormatter(formatter)
     stream_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
