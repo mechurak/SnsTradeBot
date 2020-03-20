@@ -7,8 +7,8 @@ logger = logging.getLogger()
 logger.level = logging.DEBUG
 if not logger.hasHandlers():
     stream_handler = logging.StreamHandler(sys.stdout)
-    formatter = logging.Formatter('%(asctime)s[%(levelname)8s](%(filename)20s:%(lineno)-4s %(funcName)-35s) %(message)s')
-    stream_handler.setFormatter(formatter)
+    f = logging.Formatter('%(asctime)s[%(levelname)8s](%(filename)20s:%(lineno)-4s %(funcName)-35s) %(message)s')
+    stream_handler.setFormatter(f)
     logger.addHandler(stream_handler)
 
 

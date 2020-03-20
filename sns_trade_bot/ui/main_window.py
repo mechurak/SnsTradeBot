@@ -259,7 +259,9 @@ class MainWindow(QMainWindow, ModelListener):
 if __name__ == "__main__":
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
-    stream_handler = logging.StreamHandler(stream=sys.stdout)
+    stream_handler = logging.StreamHandler(sys.stdout)
+    f = logging.Formatter('%(asctime)s[%(levelname)8s](%(filename)20s:%(lineno)-4s %(funcName)-35s) %(message)s')
+    stream_handler.setFormatter(f)
     logger.addHandler(stream_handler)
 
     data_manager = DataManager()
