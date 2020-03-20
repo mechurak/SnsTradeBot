@@ -18,10 +18,10 @@ class BuyJustBuy(StrategyBase):
             logger.info('is_queued. do nothing')
             return
 
-        if self.stock.target_quantity == 0 or self.stock.target_quantity <= self.stock.quantity:
-            logger.info(f'target_quantity:{self.stock.target_quantity}, quantity:{self.stock.quantity}. do nothing')
+        if self.stock.target_qty == 0 or self.stock.target_qty <= self.stock.qty:
+            logger.info(f'target_qty:{self.stock.target_qty}, qty:{self.stock.qty}. do nothing')
             return
 
-        order_quantity = self.stock.target_quantity - self.stock.quantity
-        logger.info(f'JustBuy!!!! order_quantity:{order_quantity}')
-        self.stock.on_buy_signal(self, order_quantity)
+        order_qty = self.stock.target_qty - self.stock.qty
+        logger.info(f'JustBuy!!!! order_qty:{order_qty}')
+        self.stock.on_buy_signal(self, order_qty)

@@ -2,9 +2,10 @@ import enum
 import logging
 import os
 import json
-import queue
 import sys
 from abc import abstractmethod
+from typing import Dict, List
+
 from sns_trade_bot.model.stock import Stock
 
 logger = logging.getLogger(__name__)
@@ -49,17 +50,14 @@ class HoldType(enum.Enum):
 class DataManager:
     SAVE_FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../my_stock_list.json')
 
-    order_queue: queue.Queue
-
     def __init__(self):
-        self.account = '1234'
-        self.account_list = ['1234', '4567']
-        self.condition_list = [Condition(1, 'temp1'), Condition(2, 'temp2')]
-        self.stock_dic = {}
-        self.temp_stock_list = []
-        self.listener_list = []
-        self.order_queue = queue.Queue()
-        self.selected_code_list = []
+        self.account: str = '1234'
+        self.account_list: List[str] = ['1234', '4567']
+        self.condition_list: List[Condition] = [Condition(1, 'temp1'), Condition(2, 'temp2')]
+        self.stock_dic: Dict[str, Stock] = {}
+        self.temp_stock_list: List[Stock] = []
+        self.listener_list: List[ModelListener] = []
+        self.selected_code_list: List[str] = []
 
     def __str__(self):
         ret_str = '====== UserData =======\n'
@@ -97,7 +95,7 @@ class DataManager:
         for loaded_stock in stock_list:
             stock = self.get_stock(loaded_stock['code'])
             stock.name = loaded_stock['name']
-            stock.target_quantity = loaded_stock['target_quantity']
+            stock.target_qty = loaded_stock['target_qty']
             for k, v in loaded_stock['buy_strategy_dic'].items():
                 stock.add_buy_strategy(k, v)
             for k, v in loaded_stock['sell_strategy_dic'].items():
@@ -122,11 +120,11 @@ class DataManager:
         code_list = []
         if the_hold_type == HoldType.INTEREST:
             for stock in self.stock_dic.values():
-                if stock.quantity == 0:
+                if stock.qty == 0:
                     code_list.append(stock.code)
         elif the_hold_type == HoldType.HOLDING:
             for stock in self.stock_dic.values():
-                if stock.quantity > 0:
+                if stock.qty > 0:
                     code_list.append(stock.code)
         elif the_hold_type == HoldType.TARGET:
             for stock in self.stock_dic.values():

@@ -17,6 +17,6 @@ class SellOnClosing(StrategyBase):
             logger.info("is_queued. do nothing")
             return
 
-        if self.stock.quantity > 0:
-            logger.info(f'SellOnClosing!!!! order_quantity:{self.stock.quantity}')
-            self.stock.on_sell_signal(self, self.stock.quantity)
+        if self.stock.qty > 0:
+            logger.info(f'SellOnClosing!!!! order_qty:{self.stock.qty}')
+            self.stock.on_sell_signal(self, self.stock.qty)

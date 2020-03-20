@@ -68,21 +68,21 @@ class KiwoomEventHandler(EventHandler):
                 self.print_tr_data(tr_code, record_name, i, TrResultKey.BALANCE_MULTI)
                 code_raw = self.ocx.get_comm_data(tr_code, record_name, i, '종목코드')  # A096530
                 name = self.ocx.get_comm_data(tr_code, record_name, i, '종목명')  # 씨젠
-                quantity_str = self.ocx.get_comm_data(tr_code, record_name, i, '보유수량')  # 000000000010
+                qty_str = self.ocx.get_comm_data(tr_code, record_name, i, '보유수량')  # 000000000010
                 buy_price_str = self.ocx.get_comm_data(tr_code, record_name, i, '평균단가')  # 000000037650
                 cur_price_str = self.ocx.get_comm_data(tr_code, record_name, i, '현재가')  # 000000037200
                 earning_rate_str = self.ocx.get_comm_data(tr_code, record_name, i, '손익율')  # -00000014688
                 code = code_raw[1:]  # Remove 'A'
-                quantity = int(quantity_str)
+                qty = int(qty_str)
                 buy_price = int(buy_price_str)
                 cur_price = int(cur_price_str)
                 earning_rate = float(earning_rate_str) / 10000
-                logger.info(f'code:{code}, name:{name}, quantity:{quantity}, buy_price:{buy_price}, '
+                logger.info(f'code:{code}, name:{name}, qty:{qty}, buy_price:{buy_price}, '
                             f'cur_price:{cur_price}, earning_rate:{earning_rate}')
                 stock = self.data_manager.get_stock(code)
                 stock.name = name
                 stock.cur_price = cur_price
-                stock.quantity = quantity
+                stock.qty = qty
                 stock.buy_price = buy_price
                 stock.earning_rate = earning_rate
             self.data_manager.set_updated(DataType.TABLE_BALANCE)

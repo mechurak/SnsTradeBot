@@ -194,7 +194,7 @@ class MainWindow(QMainWindow, ModelListener):
             code_item = self.table_balance.item(row, 0)
             code = code_item.text()
             stock = self.data_manager.get_stock(code)
-            stock.target_quantity = target_qty
+            stock.target_qty = target_qty
             logger.info(f'{code}: {target_qty}')
 
     # ModelListener
@@ -222,8 +222,8 @@ class MainWindow(QMainWindow, ModelListener):
                 self.table_balance.setItem(i, 1, QTableWidgetItem(stock.name))
                 self.table_balance.setItem(i, 2, QTableWidgetItem(str(stock.cur_price)))
                 self.table_balance.setItem(i, 3, QTableWidgetItem(str(stock.buy_price)))
-                self.table_balance.setItem(i, 4, QTableWidgetItem(str(stock.quantity)))
-                self.table_balance.setItem(i, 5, QTableWidgetItem(str(stock.target_quantity)))
+                self.table_balance.setItem(i, 4, QTableWidgetItem(str(stock.qty)))
+                self.table_balance.setItem(i, 5, QTableWidgetItem(str(stock.target_qty)))
                 self.table_balance.setItem(i, 6, QTableWidgetItem(str(stock.earning_rate)))
                 self.table_balance.setItem(i, 7, QTableWidgetItem(str(list(stock.buy_strategy_dic.keys()))))
                 self.table_balance.setItem(i, 8, QTableWidgetItem(str(list(stock.sell_strategy_dic.keys()))))

@@ -10,15 +10,22 @@ from sns_trade_bot.model.data_manager import DataManager, ModelListener, DataTyp
 
 logger = logging.getLogger()
 logger.level = logging.DEBUG
-stream_handler = logging.StreamHandler(sys.stdout)
-formatter = logging.Formatter('%(asctime)s [%(levelname)s|%(filename)s:%(lineno)s(%(funcName)s)] %(message)s')
-stream_handler.setFormatter(formatter)
-logger.addHandler(stream_handler)
+if not logger.hasHandlers():
+    stream_handler = logging.StreamHandler(sys.stdout)
+    formatter = logging.Formatter('%(asctime)s[%(levelname)8s](%(filename)20s:%(lineno)-4s %(funcName)-35s) %(message)s')
+    stream_handler.setFormatter(formatter)
+    logger.addHandler(stream_handler)
 
 
 class TempModelListener(ModelListener):
     def on_data_updated(self, data_type: DataType):
         logger.info(f"on_data_update. {data_type}")
+
+    def on_buy_signal(self, code: str, qty: int):
+        logger.info(f'on_buy_signal. {code} {qty}')
+
+    def on_sell_signal(self, code: str, qty: int):
+        logger.info(f'on_sell_signal. {code} {qty}')
 
 
 class TestKiwoom(unittest.TestCase):

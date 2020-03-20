@@ -21,8 +21,8 @@ class BuyOnOpening(StrategyBase):
 
     def on_tr_data(self, current_price):
         # TODO: 동시호가때 너무 올랐을 경우 대비 필요함 (현재가에 몇 프로 더해서 계산?)
-        self.stock.target_quantity = (self.budget * 10000) // self.stock.cur_price
-        logger.info(f'budget:{self.budget}, target_quantity:{self.stock.target_quantity}')
+        self.stock.target_qty = (self.budget * 10000) // self.stock.cur_price
+        logger.info(f'budget:{self.budget}, target_qty:{self.stock.target_qty}')
 
     def on_time(self, cur_time_str):
         logger.info(f'BuyOnOpening. time:{cur_time_str}. {self.stock.name}')
@@ -30,14 +30,14 @@ class BuyOnOpening(StrategyBase):
             logger.info('is_queued. do nothing')
             return
 
-        if not self.stock.target_quantity:
+        if not self.stock.target_qty:
             return
 
-        order_quantity = self.stock.target_quantity - self.stock.quantity
+        order_qty = self.stock.target_qty - self.stock.qty
 
-        if self.stock.target_quantity == 0 or order_quantity <= 0:
-            logger.info(f'target_quantity:{self.stock.target_quantity}, quantity:{self.stock.quantity}. do nothing')
+        if self.stock.target_qty == 0 or order_qty <= 0:
+            logger.info(f'target_qty:{self.stock.target_qty}, qty:{self.stock.qty}. do nothing')
             return
 
-        logger.info(f'BuyOnOpening!!!! order_quantity:{order_quantity}')
-        self.stock.on_buy_signal(self, order_quantity)
+        logger.info(f'BuyOnOpening!!!! order_qty:{order_qty}')
+        self.stock.on_buy_signal(self, order_qty)

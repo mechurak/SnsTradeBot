@@ -10,10 +10,11 @@ from sns_trade_bot.model.data_manager import DataManager, ModelListener, DataTyp
 
 logger = logging.getLogger()
 logger.level = logging.DEBUG
-stream_handler = logging.StreamHandler(sys.stdout)
-formatter = logging.Formatter('%(asctime)s [%(levelname)s|%(filename)s:%(lineno)s(%(funcName)s)] %(message)s')
-stream_handler.setFormatter(formatter)
-logger.addHandler(stream_handler)
+if not logger.hasHandlers():
+    stream_handler = logging.StreamHandler(sys.stdout)
+    formatter = logging.Formatter('%(asctime)s[%(levelname)8s](%(filename)20s:%(lineno)-4s %(funcName)-35s) %(message)s')
+    stream_handler.setFormatter(formatter)
+    logger.addHandler(stream_handler)
 
 
 class TempModelListener(ModelListener):

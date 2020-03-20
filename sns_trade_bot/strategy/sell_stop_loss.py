@@ -24,11 +24,11 @@ class SellStopLoss(StrategyBase):
             logger.info('is_queued. do nothing')
             return
 
-        if self.stock.quantity == 0:
-            logger.debug('quantity == 0. do nothing')
+        if self.stock.qty == 0:
+            logger.debug('qty == 0. do nothing')
             return
 
         if self.stock.earning_rate < self.threshold:
-            logger.info(f'StopLoss!!!! name:{self.stock.name}, quantity:{self.stock.quantity}. '
+            logger.info(f'StopLoss!!!! name:{self.stock.name}, qty:{self.stock.qty}. '
                         f'earning_rate:{self.stock.earning_rate:0.2f} < threshold:{self.threshold}')
-            self.stock.on_sell_signal(self.stock.quantity)
+            self.stock.on_sell_signal(self.stock.qty)

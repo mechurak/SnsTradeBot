@@ -110,29 +110,29 @@ class Kiwoom:
         logger.info(f'tr_code_info(). put')
         self.tr_queue.put(job)
 
-    def tr_buy_order(self, the_code, the_quantity):
-        logger.info(f'tr_buy_order(). the_code:{the_code}, the_quantity:{the_quantity}')
+    def tr_buy_order(self, the_code, the_qty):
+        logger.info(f'tr_buy_order(). the_code:{the_code}, the_qty:{the_qty}')
         order_type = 1  # 신규매수
         price = 0
         hoga_gb = '03'  # 시장가
         org_order_no = ''
         # self.ocx.send_order(RqName.ORDER.value, ScreenNo.ORDER.value, self.data_manager.account, order_type, the_code,
-        #                     the_quantity, price, hoga_gb, org_order_no)
+        #                     the_qty, price, hoga_gb, org_order_no)
         job = Job(self.ocx.send_order, RqName.ORDER.value, ScreenNo.ORDER.value, self.data_manager.account, order_type,
-                  the_code, the_quantity, price, hoga_gb, org_order_no)
+                  the_code, the_qty, price, hoga_gb, org_order_no)
         logger.info(f'tr_buy_order(). put')
         self.tr_queue.put(job)
 
-    def tr_sell_order(self, the_code, the_quantity):
-        logger.info(f'tr_sell_order(). the_code:{the_code}, the_quantity:{the_quantity}')
+    def tr_sell_order(self, the_code, the_qty):
+        logger.info(f'tr_sell_order(). the_code:{the_code}, the_qty:{the_qty}')
         order_type = 2  # 신규매도
         price = 0
         hoga_gb = '03'  # 시장가
         org_order_no = ''
         # self.ocx.send_order(RqName.ORDER.value, ScreenNo.ORDER.value, self.data_manager.account, order_type, the_code,
-        #                     the_quantity, price, hoga_gb, org_order_no)
+        #                     the_qty, price, hoga_gb, org_order_no)
         job = Job(self.ocx.send_order, RqName.ORDER.value, ScreenNo.ORDER.value, self.data_manager.account, order_type,
-                  the_code, the_quantity, price, hoga_gb, org_order_no)
+                  the_code, the_qty, price, hoga_gb, org_order_no)
         logger.info(f'tr_sell_order(). put')
         self.tr_queue.put(job)
 
