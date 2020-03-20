@@ -27,18 +27,22 @@ class TestStock(unittest.TestCase):
         stock.buy_price = 2915
         stock.cur_price = 2020
         stock.quantity = 100
-        cur_earning_rate = stock.get_cur_earning_rate()
-        logger.info(f'cur_earning_rate: {cur_earning_rate:0.2f} %')
-        self.assertAlmostEqual(-30.9005, cur_earning_rate, delta=0.1)
+
+        stock.update_earning_rate()
+        logger.info(f'earning_rate:{stock.earning_rate:0.2f} %')
+
+        self.assertAlmostEqual(-30.9005, stock.earning_rate, delta=0.1)
 
         # code:096530, name:씨젠, quantity:1, buy_price:37650, cur_price:67200, earning_rate:78.0133
         stock = self.data_manager.get_stock('000001')
         stock.buy_price = 37650
         stock.cur_price = 67200
         stock.quantity = 1
-        cur_earning_rate = stock.get_cur_earning_rate()
-        logger.info(f'cur_earning_rate: {cur_earning_rate:0.2f} %')
-        self.assertAlmostEqual(78.0133, cur_earning_rate, delta=0.1)
+
+        stock.update_earning_rate()
+        logger.info(f'earning_rate: {stock.earning_rate:0.2f} %')
+
+        self.assertAlmostEqual(78.0133, stock.earning_rate, delta=0.1)
 
 
 if __name__ == '__main__':

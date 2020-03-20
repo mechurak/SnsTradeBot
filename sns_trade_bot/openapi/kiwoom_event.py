@@ -111,8 +111,11 @@ class KiwoomEventHandler(EventHandler):
             price_str = self.ocx.get_comm_real_data(code, 10)
             cur_price = int(price_str)
             cur_price = cur_price if cur_price >= 0 else cur_price * (-1)
+
             stock = self.data_manager.get_stock(code)
             stock.cur_price = cur_price
+            stock.update_earning_rate()
+
             for strategy in stock.sell_strategy_dic.values():
                 strategy.on_price_updated()
             for strategy in stock.buy_strategy_dic.values():
@@ -169,7 +172,7 @@ class KiwoomEventHandler(EventHandler):
         temp_stock_list = []
         for code in code_list:
             name = self.ocx.get_master_code_name([code])
-            temp_stock_list.append(Stock(self.data_manager.order_queue, code, name))
+            temp_stock_list.append(Stock(self.data_manager.listener_list, code, name))
             logger.debug("code: %s, name: %s", code, name)
         self.data_manager.set_temp_stock_list(temp_stock_list)
 

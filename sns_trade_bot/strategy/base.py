@@ -14,13 +14,6 @@ class StrategyBase:
         self.is_queued = False
         logger.info("StrategyBase. %s, %s", the_stock.name, str(the_param_dic))
 
-    @staticmethod
-    def get_default_param_dic():
-        """
-        to provide UI module with default param
-        """
-        return {}
-
     def get_param_dic(self):
         return {}
 

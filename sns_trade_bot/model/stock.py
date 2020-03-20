@@ -67,9 +67,10 @@ class Stock:
         for listener in self.listener_list:
             listener.on_sell_signal(self.code, the_order_quantity)
 
-    def get_cur_earning_rate(self) -> float:
-        if not self.buy_price:
-            return 0
+    def update_earning_rate(self):
+        if self.quantity == 0:
+            self.earning_rate = 0.0
+            return
 
         # 매수수수료 = 매입금액 * 매체수수료(0.015 %)(10 원미만 절사)
         매수수수료 = (self.buy_price * self.quantity) * 0.00015
@@ -88,6 +89,4 @@ class Stock:
         # 평가손익 = 평가금액 - 매입금액
         평가손익 = 평가금액 - (self.buy_price * self.quantity)
 
-        earning_rate = 평가손익 / (self.buy_price * self.quantity) * 100
-
-        return earning_rate
+        self.earning_rate = 평가손익 / (self.buy_price * self.quantity) * 100
