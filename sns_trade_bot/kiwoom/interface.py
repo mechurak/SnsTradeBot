@@ -8,9 +8,9 @@ from datetime import datetime
 
 from PyQt5.QtWidgets import *
 from sns_trade_bot.model.data_manager import DataManager, DataType, ModelListener, Condition
-from sns_trade_bot.openapi.kiwoom_common import RqName, ScreenNo
-from sns_trade_bot.openapi.kiwoom_internal import KiwoomOcx
-from sns_trade_bot.openapi.kiwoom_event import KiwoomEventHandler
+from sns_trade_bot.kiwoom.common import RqName, ScreenNo
+from sns_trade_bot.kiwoom.internal import KiwoomOcx
+from sns_trade_bot.kiwoom.event import KiwoomEventHandler
 
 logger = logging.getLogger(__name__)
 
@@ -38,17 +38,20 @@ class Kiwoom:
         self.ocx.set_event_handler(self.handler)
 
         self.tr_queue = queue.Queue()
-        t = threading.Thread(target=self.tr_worker)
-        t.daemon = True
-        t.start()
+        worker_thread = threading.Thread(target=self.tr_worker)
+        worker_thread.daemon = True
+        worker_thread.start()
+        self.tr_queue.join()
 
     def tr_worker(self):
         while True:
-            f = self.tr_queue.get()
-            ret = f()
-            logger.info(f'{f.fn.__name__}{f.args}. ret:{ret}')
-            self.tr_queue.task_done()
+            job = self.tr_queue.get()
+            ret = job()
+            logger.info(f'{job.fn.__name__}{job.args}. ret:{ret}')
+            logger.info('sleep')
             time.sleep(0.2)
+            self.tr_queue.task_done()
+            logger.info('after task_done()')
 
     def tr_connect(self):
         # self.ocx.comm_connect()
@@ -69,7 +72,7 @@ class Kiwoom:
         :callback: _on_receive_condition_ver()
         """
         # return self.ocx.get_condition_load_async()
-        job = Job(self.ocx.get_condition_load_async)
+        job = Job(self.ocx.get_condition_load)
         logger.info(f'tr_load_condition_list(). put')
         self.tr_queue.put(job)
 
@@ -140,15 +143,16 @@ class Kiwoom:
 if __name__ == "__main__":
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
-    f = logging.Formatter('%(asctime)s[%(levelname)8s](%(filename)20s:%(lineno)-4s %(funcName)-35s) %(message)s')
+    formatter = logging.Formatter(
+        '%(asctime)s[%(levelname)8s](%(filename)20s:%(lineno)-4s %(funcName)-35s) %(message)s')
     LOG_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../log")
     if not os.path.exists(LOG_DIR):
         os.makedirs(LOG_DIR)
     file_name = LOG_DIR + "/" + datetime.now().strftime("%Y%m%d-%H%M%S") + ".log"
     file_handler = logging.FileHandler(file_name, "a", "utf-8")
     stream_handler = logging.StreamHandler(sys.stdout)
-    file_handler.setFormatter(f)
-    stream_handler.setFormatter(f)
+    file_handler.setFormatter(formatter)
+    stream_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
     logger.addHandler(stream_handler)
 

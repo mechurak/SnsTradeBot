@@ -2,7 +2,7 @@ import logging
 
 from PyQt5.QAxContainer import *
 from sns_trade_bot.model.data_manager import DataManager
-from sns_trade_bot.openapi.kiwoom_common import ScreenNo, RqName, EventHandler
+from sns_trade_bot.kiwoom.common import ScreenNo, RqName, EventHandler
 
 logger = logging.getLogger(__name__)
 
@@ -113,7 +113,7 @@ class KiwoomOcx(QAxWidget):
         ret = self.dynamicCall("GetLoginInfo(QString)", tag)
         return ret
 
-    def get_condition_load_async(self):
+    def get_condition_load(self):
         """HTS 에 저장된 condition 불러옴
 
         :return: 1(성공)

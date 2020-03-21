@@ -5,7 +5,7 @@ import unittest
 from unittest.mock import Mock
 
 from PyQt5.QtWidgets import *
-from sns_trade_bot.openapi.kiwoom import Kiwoom
+from sns_trade_bot.kiwoom.interface import Kiwoom
 from sns_trade_bot.model.data_manager import DataManager, ModelListener, DataType
 
 logger = logging.getLogger()

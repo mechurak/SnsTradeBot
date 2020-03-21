@@ -24,11 +24,11 @@ class ModelListener:
         pass
 
     @abstractmethod
-    def on_buy_signal(self, code: str,  qty: int):
+    def on_buy_signal(self, code: str, qty: int):
         pass
 
     @abstractmethod
-    def on_sell_signal(self, code: str,  qty: int):
+    def on_sell_signal(self, code: str, qty: int):
         pass
 
 
@@ -180,8 +180,9 @@ if __name__ == "__main__":
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     stream_handler = logging.StreamHandler(sys.stdout)
-    f = logging.Formatter('%(asctime)s[%(levelname)8s](%(filename)20s:%(lineno)-4s %(funcName)-35s) %(message)s')
-    stream_handler.setFormatter(f)
+    formatter = logging.Formatter(
+        '%(asctime)s[%(levelname)8s](%(filename)20s:%(lineno)-4s %(funcName)-35s) %(message)s')
+    stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
 
     data_manager = DataManager()

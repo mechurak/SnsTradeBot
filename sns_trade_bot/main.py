@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 from PyQt5.QtWidgets import QApplication
 from sns_trade_bot.ui.main_window import MainWindow, UiListener
-from sns_trade_bot.openapi.kiwoom import Kiwoom
+from sns_trade_bot.kiwoom.interface import Kiwoom
 from sns_trade_bot.model.data_manager import DataManager, HoldType, ModelListener, DataType
 import sns_trade_bot.slack.run
 import threading

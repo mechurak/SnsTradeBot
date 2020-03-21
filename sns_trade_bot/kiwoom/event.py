@@ -2,8 +2,8 @@ import logging
 
 from sns_trade_bot.model.data_manager import DataManager, DataType
 from sns_trade_bot.model.stock import Stock
-from sns_trade_bot.openapi.kiwoom_common import ScreenNo, RqName, EventHandler, TrResultKey
-from sns_trade_bot.openapi.kiwoom_internal import KiwoomOcx
+from sns_trade_bot.kiwoom.common import ScreenNo, RqName, EventHandler, TrResultKey
+from sns_trade_bot.kiwoom.internal import KiwoomOcx
 
 logger = logging.getLogger(__name__)
 
