@@ -41,7 +41,6 @@ class Kiwoom:
         worker_thread = threading.Thread(target=self.tr_worker)
         worker_thread.daemon = True
         worker_thread.start()
-        self.tr_queue.join()
 
     def tr_worker(self):
         while True:
@@ -59,34 +58,29 @@ class Kiwoom:
         logger.info(f'tr_connect(). put')
         self.tr_queue.put(job)
 
-    def get_master_code_name(self, code):
-        return self.ocx.get_master_code_name(code)
-
-    def get_connect_state(self):
-        return self.ocx.get_connect_state()
-
     def tr_load_condition_list(self):
-        """HTS 에 저장된 condition 불러옴
-
-        :return: 1(성공)
-        :callback: _on_receive_condition_ver()
-        """
-        # return self.ocx.get_condition_load_async()
-        job = Job(self.ocx.get_condition_load)
-        logger.info(f'tr_load_condition_list(). put')
-        self.tr_queue.put(job)
+        return self.ocx.get_condition_load()
+        # FIXME: tr_queue.put() doesn't work
+        # job_item = Job(self.ocx.get_condition_load)
+        # logger.info(f'tr_load_condition_list(). put {self.tr_queue}')
+        # logger.info(f'qsize: {self.tr_queue.qsize()}')
+        # logger.info(f'full: {self.tr_queue.full()}')
+        # logger.info(f'empty: {self.tr_queue.empty()}')
+        # # self.tr_queue.put(job_item)
+        # self.tr_queue.put_nowait(job_item)
+        # logger.info('after put')
 
     def tr_check_condition(self, condition: Condition):
         query_type = 0  # 일반조회
-        # return self.ocx.send_condition_async(ScreenNo.CONDITION.value, condition.name, condition.index, query_type)
-        job = Job(self.ocx.send_condition_async, ScreenNo.CONDITION.value, condition.name, condition.index, query_type)
+        # return self.ocx.send_condition(ScreenNo.CONDITION.value, condition.name, condition.index, query_type)
+        job = Job(self.ocx.send_condition, ScreenNo.CONDITION.value, condition.name, condition.index, query_type)
         logger.info(f'tr_check_condition(). put')
         self.tr_queue.put(job)
 
     def tr_register_condition(self, condition: Condition):
         query_type = 1  # 실시간조회
-        # return self.ocx.send_condition_async(ScreenNo.CONDITION.value, condition.name, condition.index, query_type)
-        job = Job(self.ocx.send_condition_async, ScreenNo.CONDITION.value, condition.name, condition.index, query_type)
+        # return self.ocx.send_condition(ScreenNo.CONDITION.value, condition.name, condition.index, query_type)
+        job = Job(self.ocx.send_condition, ScreenNo.CONDITION.value, condition.name, condition.index, query_type)
         logger.info(f'tr_register_condition(). put')
         self.tr_queue.put(job)
 

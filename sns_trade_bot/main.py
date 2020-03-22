@@ -72,7 +72,7 @@ class Manager(UiListener, ModelListener):
 
     # ModelListener
     def on_data_updated(self, data_type: DataType):
-        pass
+        logger.info(f'data_type: {data_type}')
 
     def on_buy_signal(self, code: str, qty: int):
         logger.info(f'on_buy_signal!! code:{code}, qty:{qty}')

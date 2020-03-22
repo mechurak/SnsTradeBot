@@ -42,9 +42,14 @@ class KiwoomOcx(QAxWidget):
             ret_dic[int(temp_list[0])] = temp_list[1]
         return ret_dic
 
-    def get_master_code_name(self, code):
-        code_name = self.dynamicCall("GetMasterCodeName(QString)", code)
-        return code_name
+    def get_master_code_name(self, code: str) -> str:
+        """종목코드의 한글명을 반환한다.
+
+        :param code: 종목코드
+        :return: 종목한글명
+        """
+        name = self.dynamicCall("GetMasterCodeName(QString)", [code])
+        return name
 
     def get_connect_state(self):
         ret = self.dynamicCall("GetConnectState()")
@@ -123,7 +128,7 @@ class KiwoomOcx(QAxWidget):
         logger.debug("ret: %d", ret)
         return ret
 
-    def send_condition_async(self, screen_num: str, condition_name: str, condition_index: int, query_type: int):
+    def send_condition(self, screen_num: str, condition_name: str, condition_index: int, query_type: int) -> int:
         """ condition 만족하는 종목 조회 or 실시간 등록
 
         :param screen_num:

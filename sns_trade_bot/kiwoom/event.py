@@ -171,7 +171,7 @@ class KiwoomEventHandler(EventHandler):
         logger.debug("code_list: %s", code_list)
         temp_stock_list = []
         for code in code_list:
-            name = self.ocx.get_master_code_name([code])
+            name = self.ocx.get_master_code_name(code)
             temp_stock_list.append(Stock(self.data_manager.listener_list, code, name))
             logger.debug("code: %s, name: %s", code, name)
         self.data_manager.set_temp_stock_list(temp_stock_list)
