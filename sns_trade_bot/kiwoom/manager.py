@@ -5,6 +5,7 @@ import logging
 import threading
 import time
 from datetime import datetime
+from typing import List
 
 from PyQt5.QtWidgets import *
 from sns_trade_bot.model.data_manager import DataManager, DataType, ModelListener, Condition
@@ -38,96 +39,78 @@ class Kiwoom:
         self.ocx.set_event_handler(self.handler)
 
         self.tr_queue = queue.Queue()
-        worker_thread = threading.Thread(target=self.tr_worker)
+        worker_thread = threading.Thread(target=self.worker_run)
         worker_thread.daemon = True
         worker_thread.start()
 
-    def tr_worker(self):
+    def worker_run(self):
         while True:
             job = self.tr_queue.get()
+            logger.info(f'{job.fn.__name__}{job.args}.')
             ret = job()
             logger.info(f'{job.fn.__name__}{job.args}. ret:{ret}')
-            logger.info('sleep')
             time.sleep(0.2)
             self.tr_queue.task_done()
-            logger.info('after task_done()')
 
     def tr_connect(self):
-        # self.ocx.comm_connect()
         job = Job(self.ocx.comm_connect)
         logger.info(f'tr_connect(). put')
         self.tr_queue.put(job)
 
     def tr_load_condition_list(self):
-        return self.ocx.get_condition_load()
-        # FIXME: tr_queue.put() doesn't work
-        # job_item = Job(self.ocx.get_condition_load)
-        # logger.info(f'tr_load_condition_list(). put {self.tr_queue}')
-        # logger.info(f'qsize: {self.tr_queue.qsize()}')
-        # logger.info(f'full: {self.tr_queue.full()}')
-        # logger.info(f'empty: {self.tr_queue.empty()}')
-        # # self.tr_queue.put(job_item)
-        # self.tr_queue.put_nowait(job_item)
-        # logger.info('after put')
+        job_item = Job(self.ocx.get_condition_load)
+        logger.info(f'tr_load_condition_list(). put {self.tr_queue}')
+        self.tr_queue.put(job_item)
 
     def tr_check_condition(self, condition: Condition):
         query_type = 0  # 일반조회
-        # return self.ocx.send_condition(ScreenNo.CONDITION.value, condition.name, condition.index, query_type)
         job = Job(self.ocx.send_condition, ScreenNo.CONDITION.value, condition.name, condition.index, query_type)
         logger.info(f'tr_check_condition(). put')
         self.tr_queue.put(job)
 
     def tr_register_condition(self, condition: Condition):
         query_type = 1  # 실시간조회
-        # return self.ocx.send_condition(ScreenNo.CONDITION.value, condition.name, condition.index, query_type)
         job = Job(self.ocx.send_condition, ScreenNo.CONDITION.value, condition.name, condition.index, query_type)
         logger.info(f'tr_register_condition(). put')
         self.tr_queue.put(job)
 
-    def tr_multi_code_detail(self, the_code_list: list):
+    def tr_multi_code_detail(self, the_code_list: List[str]):
         """ 복수 종목에 대한 기본 정보 요청
         """
-        # self.ocx.comm_kw_rq_data_async(the_code_list)
         job = Job(self.ocx.comm_kw_rq_data_async, the_code_list)
         logger.info(f'tr_multi_code_detail(). put')
         self.tr_queue.put(job)
 
-    def set_real_reg(self, the_code_list: list):
+    def set_real_reg(self, the_code_list: List[str]):
         self.ocx.set_real_reg(the_code_list)
 
     def tr_account_detail(self):
-        # self.ocx.request_account_detail()
         job = Job(self.ocx.request_account_detail)
         logger.info(f'tr_account_detail(). put')
         self.tr_queue.put(job)
 
-    def tr_code_info(self, the_code):
-        # self.ocx.request_code_info(the_code)
+    def tr_code_info(self, the_code: str):
         job = Job(self.ocx.request_code_info, the_code)
         logger.info(f'tr_code_info(). put')
         self.tr_queue.put(job)
 
-    def tr_buy_order(self, the_code, the_qty):
+    def tr_buy_order(self, the_code: str, the_qty: int):
         logger.info(f'tr_buy_order(). the_code:{the_code}, the_qty:{the_qty}')
         order_type = 1  # 신규매수
         price = 0
         hoga_gb = '03'  # 시장가
         org_order_no = ''
-        # self.ocx.send_order(RqName.ORDER.value, ScreenNo.ORDER.value, self.data_manager.account, order_type, the_code,
-        #                     the_qty, price, hoga_gb, org_order_no)
         job = Job(self.ocx.send_order, RqName.ORDER.value, ScreenNo.ORDER.value, self.data_manager.account, order_type,
                   the_code, the_qty, price, hoga_gb, org_order_no)
         logger.info(f'tr_buy_order(). put')
         self.tr_queue.put(job)
 
-    def tr_sell_order(self, the_code, the_qty):
+    def tr_sell_order(self, the_code: str, the_qty: int):
         logger.info(f'tr_sell_order(). the_code:{the_code}, the_qty:{the_qty}')
         order_type = 2  # 신규매도
         price = 0
         hoga_gb = '03'  # 시장가
         org_order_no = ''
-        # self.ocx.send_order(RqName.ORDER.value, ScreenNo.ORDER.value, self.data_manager.account, order_type, the_code,
-        #                     the_qty, price, hoga_gb, org_order_no)
         job = Job(self.ocx.send_order, RqName.ORDER.value, ScreenNo.ORDER.value, self.data_manager.account, order_type,
                   the_code, the_qty, price, hoga_gb, org_order_no)
         logger.info(f'tr_sell_order(). put')
@@ -168,27 +151,27 @@ if __name__ == "__main__":
     tempModelListener = TempModelListener()
     data_manager = DataManager()
     data_manager.add_listener(tempModelListener)
-    kiwoom_api = Kiwoom(data_manager)
+    kiwoom_manager = Kiwoom(data_manager)
 
     from PyQt5.QtCore import QEventLoop
 
     event_loop = QEventLoop()
 
-    kiwoom_api.tr_connect()
+    kiwoom_manager.tr_connect()
     event_loop.exec_()
 
-    kiwoom_api.tr_load_condition_list()
+    kiwoom_manager.tr_load_condition_list()
     event_loop.exec_()
 
     target_condition = data_manager.condition_list[0]
-    kiwoom_api.tr_check_condition(target_condition)
+    kiwoom_manager.tr_check_condition(target_condition)
     event_loop.exec_()
 
     input_code_list = ['004540', '005360', '053110']
-    kiwoom_api.tr_multi_code_detail(input_code_list)
+    kiwoom_manager.tr_multi_code_detail(input_code_list)
     event_loop.exec_()
 
-    kiwoom_api.set_real_reg(input_code_list)
+    kiwoom_manager.set_real_reg(input_code_list)
 
     time.sleep(2)
     logger.info('test done!')

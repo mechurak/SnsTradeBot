@@ -4,7 +4,7 @@ import unittest
 from unittest.mock import Mock
 
 from PyQt5.QtWidgets import *
-from sns_trade_bot.kiwoom.interface import Kiwoom
+from sns_trade_bot.kiwoom.manager import Kiwoom
 from sns_trade_bot.kiwoom.common import ScreenNo, RqName
 from sns_trade_bot.model.data_manager import DataManager, ModelListener, DataType
 
@@ -36,7 +36,7 @@ class TestKiwoom(unittest.TestCase):
         self.tempModelListener = TempModelListener()
         self.data_manager = DataManager()
         self.data_manager.add_listener(self.tempModelListener)
-        self.kiwoom_api = Kiwoom(self.data_manager)
+        self.kiwoom_manager = Kiwoom(self.data_manager)
 
     def tearDown(self):
         logger.info('tearDown')
@@ -53,10 +53,10 @@ class TestKiwoom(unittest.TestCase):
             }
             return mock_dic[item_name] if item_name in mock_dic.keys() else ''
 
-        self.kiwoom_api.ocx.get_comm_data = Mock(side_effect=temp_get_comm_data)
+        self.kiwoom_manager.ocx.get_comm_data = Mock(side_effect=temp_get_comm_data)
 
         # when
-        self.kiwoom_api.handler.on_receive_tr_data(ScreenNo.CODE.value, RqName.CODE_INFO.value, 'opt10001', '',
+        self.kiwoom_manager.handler.on_receive_tr_data(ScreenNo.CODE.value, RqName.CODE_INFO.value, 'opt10001', '',
                                                    '0', '', '', '', '')
 
         # then
@@ -106,11 +106,11 @@ class TestKiwoom(unittest.TestCase):
             ]
             return mock_dic_list[index][item_name] if item_name in mock_dic_list[index].keys() else ''
 
-        self.kiwoom_api.ocx.get_comm_data = Mock(side_effect=temp_get_comm_data)
-        self.kiwoom_api.ocx.get_repeat_cnt = Mock(return_value=2)
+        self.kiwoom_manager.ocx.get_comm_data = Mock(side_effect=temp_get_comm_data)
+        self.kiwoom_manager.ocx.get_repeat_cnt = Mock(return_value=2)
 
         # when
-        self.kiwoom_api.handler.on_receive_tr_data(ScreenNo.BALANCE.value, RqName.BALANCE.value, 'OPW00004', '',
+        self.kiwoom_manager.handler.on_receive_tr_data(ScreenNo.BALANCE.value, RqName.BALANCE.value, 'OPW00004', '',
                                                    '0', '', '', '', '')
 
         # then

@@ -5,7 +5,7 @@ import unittest
 from unittest.mock import Mock
 
 from PyQt5.QtWidgets import *
-from sns_trade_bot.kiwoom.interface import Kiwoom
+from sns_trade_bot.kiwoom.manager import Kiwoom
 from sns_trade_bot.model.data_manager import DataManager, ModelListener, DataType
 
 logger = logging.getLogger()
@@ -36,7 +36,7 @@ class TestKiwoom(unittest.TestCase):
         self.tempModelListener = TempModelListener()
         self.data_manager = DataManager()
         self.data_manager.add_listener(self.tempModelListener)
-        self.kiwoom_api = Kiwoom(self.data_manager)
+        self.kiwoom_manager = Kiwoom(self.data_manager)
 
     def tearDown(self):
         logger.info('tearDown')
@@ -50,8 +50,8 @@ class TestKiwoom(unittest.TestCase):
             logger.info(f'send_order(). order_type:{order_type}, code:{code}, qty:{qty}')
             return 1
 
-        self.kiwoom_api.ocx.send_order = Mock(side_effects=temp_send_order)
-        self.kiwoom_api.ocx.send_order.__name__ = 'temp_send_order'
+        self.kiwoom_manager.ocx.send_order = Mock(side_effects=temp_send_order)
+        self.kiwoom_manager.ocx.send_order.__name__ = 'temp_send_order'
 
         stock0001 = self.data_manager.get_stock('0001')
         stock0001.name = '테스트종목'
@@ -59,15 +59,15 @@ class TestKiwoom(unittest.TestCase):
         stock0002.name = 'temp종목'
 
         # when
-        self.kiwoom_api.tr_buy_order('0001', 3)
-        self.kiwoom_api.tr_sell_order('0002', 2)
+        self.kiwoom_manager.tr_buy_order('0001', 3)
+        self.kiwoom_manager.tr_sell_order('0002', 2)
 
         # when
         time.sleep(3)
 
         # then
-        self.kiwoom_api.ocx.send_order.assert_called()
-        logger.info(f'buy_order call_count: {self.kiwoom_api.ocx.send_order.call_count}')
+        self.kiwoom_manager.ocx.send_order.assert_called()
+        logger.info(f'buy_order call_count: {self.kiwoom_manager.ocx.send_order.call_count}')
 
 
 if __name__ == '__main__':
