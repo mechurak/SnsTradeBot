@@ -1,4 +1,5 @@
 import logging
+from typing import List
 
 from PyQt5.QAxContainer import *
 from sns_trade_bot.model.data_manager import DataManager
@@ -144,7 +145,7 @@ class KiwoomOcx(QAxWidget):
             logger.error(f'ret: {ret}')
         return ret
 
-    def comm_kw_rq_data_async(self, the_code_list: list):
+    def comm_kw_rq_data(self, the_code_list: List[str]):
         """ 복수종목조회 Tran 을 서버로 송신한다
         :callback: _on_receive_tr_data()
         """
@@ -164,7 +165,7 @@ class KiwoomOcx(QAxWidget):
         logger.info(f'CommKwRqData(). ret: {ret}')  # 0: 정상처리
         return ret
 
-    def set_real_reg(self, the_code_list: list):
+    def set_real_reg(self, the_code_list: List[str]):
         logger.debug(f'set_real_reg() {the_code_list}')
         code_list_str = ';'.join(the_code_list)
         fid = "9001;10;13"  # 종목코드,업종코드;현재가;누적거래량
@@ -196,7 +197,7 @@ class KiwoomOcx(QAxWidget):
         is_next = 0  # 연속조회요청 여부 (0:조회 , 2:연속)
         self.comm_rq_data(RqName.BALANCE, tr_code, is_next, ScreenNo.BALANCE)
 
-    def request_code_info(self, the_code):
+    def request_code_info(self, the_code: str):
         logger.info(f'code: {the_code}')
         self.set_input_value('종목코드', the_code)
         tr_code = 'opt10001'  # 주식기본정보요청

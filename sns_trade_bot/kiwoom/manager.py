@@ -77,7 +77,7 @@ class Kiwoom:
     def tr_multi_code_detail(self, the_code_list: List[str]):
         """ 복수 종목에 대한 기본 정보 요청
         """
-        job = Job(self.ocx.comm_kw_rq_data_async, the_code_list)
+        job = Job(self.ocx.comm_kw_rq_data, the_code_list)
         logger.info(f'tr_multi_code_detail(). put')
         self.tr_queue.put(job)
 
