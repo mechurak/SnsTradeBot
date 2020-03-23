@@ -82,7 +82,10 @@ class Kiwoom:
         self.tr_queue.put(job)
 
     def set_real_reg(self, the_code_list: List[str]):
-        self.ocx.set_real_reg(the_code_list)
+        code_list_str = ';'.join(the_code_list)
+        fid_list = "9001;10;13"  # 종목코드,업종코드;현재가;누적거래량
+        real_type = "0"  # 0: 최초 등록, 1: 같은 화면에 종목 추가
+        self.ocx.set_real_reg(ScreenNo.REAL.value, code_list_str, fid_list, real_type)
 
     def tr_account_detail(self):
         job = Job(self.ocx.request_account_detail)

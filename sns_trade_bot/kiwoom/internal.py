@@ -165,13 +165,24 @@ class KiwoomOcx(QAxWidget):
         logger.info(f'CommKwRqData(). ret: {ret}')  # 0: 정상처리
         return ret
 
-    def set_real_reg(self, the_code_list: List[str]):
-        logger.debug(f'set_real_reg() {the_code_list}')
-        code_list_str = ';'.join(the_code_list)
-        fid = "9001;10;13"  # 종목코드,업종코드;현재가;누적거래량
+    def set_real_reg(self, screen_no: str, code_list_str: str, fid_list_str: str, real_type: str) -> int:
+        """실시간 등록을 한다.
+
+        real_type 을 "0" 으로 하면 같은 화면에서 다른 종목 코드로 실시간 등록을 하게 되면 마지막에 사용한 종목코드만
+        실시간 등록이 되고, 기존에 있던 종목은 실시간이 자동 해지됨.
+        "1"로 하면 같은 화면에서 다른 종목을 추가할 경우, 기존에 등록한 종목도 함께 실시간 시세를 받을 수 있음.
+        꼭 같은 화면이어야 하고 최초 실시간 등록은 "0"으로 하고 이후부터 "1"로 등록해야 함.
+
+        :param screen_no: 실시간 등록한 화면 번호
+        :param code_list_str: 실시간 등록한 종목코드 (복수 종목 가능 - "종목1;종목2;종목3;...")
+        :param fid_list_str: 실시간 등록할 FID ("FID1;FID2;FID3;...")
+        :param real_type: "1": 종목 추가, "0": 기존 종목은 제외
+        :return: 0: 정상처리
+        """
+        logger.debug(f'set_real_reg(). code_list_str:"{code_list_str}", fid_list_str:"{fid_list_str}"')
         ret = self.dynamicCall("SetRealReg(QString, QString, QString, QString)",
-                               [ScreenNo.REAL.value, code_list_str, fid, "1"])  # "1" 종목 추가, "0" 기존 종목은 제외
-        logger.info(f'call set_real_reg(). ret: {ret}')
+                               [screen_no, code_list_str, fid_list_str, real_type])
+        logger.info(f'set_real_reg(). ret: {ret}')
         return ret
 
     def set_real_remove(self, scr_no: str, del_code: str):
