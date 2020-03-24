@@ -19,4 +19,4 @@ class SellOnClosing(StrategyBase):
 
         if self.stock.qty > 0:
             logger.info(f'SellOnClosing!!!! order_qty:{self.stock.qty}')
-            self.stock.on_sell_signal(self, self.stock.qty)
+            self.stock.on_sell_signal(self.NAME, self.stock.qty)

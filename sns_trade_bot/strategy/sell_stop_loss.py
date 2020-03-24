@@ -31,4 +31,4 @@ class SellStopLoss(StrategyBase):
         if self.stock.earning_rate < self.threshold:
             logger.info(f'StopLoss!!!! name:{self.stock.name}, qty:{self.stock.qty}. '
                         f'earning_rate:{self.stock.earning_rate:0.2f} < threshold:{self.threshold}')
-            self.stock.on_sell_signal(self.stock.qty)
+            self.stock.on_sell_signal(self.NAME, self.stock.qty)

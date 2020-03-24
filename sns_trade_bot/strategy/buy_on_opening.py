@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 class BuyOnOpening(StrategyBase):
     NAME = 'buy_on_opening'
-    DEFAULT_BUDGET = 30  # 만원
+    DEFAULT_BUDGET = 300  # 천원
     DEFAULT_PARAM = {'budget': DEFAULT_BUDGET}
 
     def __init__(self, the_stock, the_param_dic):
@@ -21,7 +21,7 @@ class BuyOnOpening(StrategyBase):
 
     def on_tr_data(self, current_price):
         # TODO: 동시호가때 너무 올랐을 경우 대비 필요함 (현재가에 몇 프로 더해서 계산?)
-        self.stock.target_qty = (self.budget * 10000) // self.stock.cur_price
+        self.stock.target_qty = (self.budget * 1000) // self.stock.cur_price
         logger.info(f'budget:{self.budget}, target_qty:{self.stock.target_qty}')
 
     def on_time(self, cur_time_str):
@@ -40,4 +40,4 @@ class BuyOnOpening(StrategyBase):
             return
 
         logger.info(f'BuyOnOpening!!!! order_qty:{order_qty}')
-        self.stock.on_buy_signal(self, order_qty)
+        self.stock.on_buy_signal(self.NAME, order_qty)

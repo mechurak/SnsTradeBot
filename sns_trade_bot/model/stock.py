@@ -50,12 +50,15 @@ class Stock:
         from sns_trade_bot.strategy.sell_on_closing import SellOnClosing
         from sns_trade_bot.strategy.sell_stop_loss import SellStopLoss
         from sns_trade_bot.strategy.sell_on_condition import SellOnCondition
+        from sns_trade_bot.strategy.sell_just_sell import SellJustSell
         if the_strategy_name == 'sell_on_closing':
             self.sell_strategy_dic[the_strategy_name] = SellOnClosing(self, the_param_dic)
         elif the_strategy_name == 'sell_stop_loss':
             self.sell_strategy_dic[the_strategy_name] = SellStopLoss(self, the_param_dic)
         elif the_strategy_name == 'sell_on_condition':
             self.sell_strategy_dic[the_strategy_name] = SellOnCondition(self, the_param_dic)
+        elif the_strategy_name == SellJustSell.NAME:
+            self.sell_strategy_dic[the_strategy_name] = SellJustSell(self, the_param_dic)
         else:
             logger.error(f'unknown sell strategy "{the_strategy_name}" for "{self.name}"')
 

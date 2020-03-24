@@ -111,12 +111,15 @@ class MainWindow(QMainWindow, ModelListener):
         from sns_trade_bot.strategy.sell_on_closing import SellOnClosing
         from sns_trade_bot.strategy.sell_on_condition import SellOnCondition
         from sns_trade_bot.strategy.sell_stop_loss import SellStopLoss
+        from sns_trade_bot.strategy.sell_just_sell import SellJustSell
         if strategy == "sell_on_closing":
             default_param = SellOnClosing.DEFAULT_PARAM
         elif strategy == "sell_on_condition":
             default_param = SellOnCondition.DEFAULT_PARAM
         elif strategy == "sell_stop_loss":
             default_param = SellStopLoss.DEFAULT_PARAM
+        elif strategy == "sell_just_sell":
+            default_param = SellJustSell.DEFAULT_PARAM
         else:
             return
         self.ui.txt_sell_param.setText(str(default_param))

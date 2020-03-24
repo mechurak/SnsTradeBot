@@ -32,4 +32,4 @@ class SellOnCondition(StrategyBase):
         if self.stock.earning_rate > self.threshold:
             logger.info(f'ConditionSell!!!! {the_name} name:{self.stock.name}, qty:{self.stock.qty}, '
                         f'earning_rate:{self.stock.earning_rate:0.2f} > threshold:{self.threshold}')
-            self.stock.on_sell_signal(self, self.stock.qty)
+            self.stock.on_sell_signal(self.NAME, self.stock.qty)
