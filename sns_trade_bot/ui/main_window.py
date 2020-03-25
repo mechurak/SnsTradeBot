@@ -198,7 +198,7 @@ class MainWindow(QMainWindow, ModelListener):
             code = code_item.text()
             stock = self.data_manager.get_stock(code)
             stock.target_qty = target_qty
-            logger.info(f'{code}: {target_qty}')
+            logger.debug(f'{code}: {target_qty}')
 
     # ModelListener
     def on_buy_signal(self, code: str, qty: int):

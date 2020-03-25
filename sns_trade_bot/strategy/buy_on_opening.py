@@ -26,8 +26,8 @@ class BuyOnOpening(StrategyBase):
 
     def on_time(self, cur_time_str):
         logger.info(f'BuyOnOpening. time:{cur_time_str}. {self.stock.name}')
-        if self.is_queued:
-            logger.info('is_queued. do nothing')
+        if self.stock.remained_buy_qty:
+            logger.info(f'remained_buy_qty:{self.stock.remained_buy_qty}. do nothing')
             return
 
         if not self.stock.target_qty:

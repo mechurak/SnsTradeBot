@@ -11,7 +11,6 @@ class StrategyBase:
 
     def __init__(self, the_stock, the_param_dic):
         self.stock = the_stock
-        self.is_queued = False
         logger.info("StrategyBase. %s, %s", the_stock.name, str(the_param_dic))
 
     def get_param_dic(self):

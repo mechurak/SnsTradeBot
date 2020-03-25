@@ -120,10 +120,12 @@ class KiwoomEventHandler(EventHandler):
             stock.cur_price = cur_price
             stock.update_earning_rate()
 
-            for strategy in stock.sell_strategy_dic.values():
-                strategy.on_price_updated()
-            for strategy in stock.buy_strategy_dic.values():
-                strategy.on_price_updated()
+            if stock.qty > 0 and stock.remained_sell_qty == 0:
+                for strategy in stock.sell_strategy_dic.values():
+                    strategy.on_price_updated()
+            if stock.remained_buy_qty == 0:
+                for strategy in stock.buy_strategy_dic.values():
+                    strategy.on_price_updated()
 
     def on_receive_msg(self, scr_no: str, rq_name: str, tr_code: str, msg: str):
         logger.info(f'scr_no:{scr_no}, rq_name:{rq_name}, tr_code:{tr_code}, msg:{msg}')
@@ -140,35 +142,47 @@ class KiwoomEventHandler(EventHandler):
         for fid_str in fid_str_list:
             fid = int(fid_str)
             ret = self.ocx.get_chejan_data(fid)
-            key_str = f'{Fid(fid).name}({fid})' if fid in Fid.__members__.values() else f'{fid_str}'
+            key_str = f'{Fid(fid).name}({fid})' if fid in Fid.__members__.values() else f'UNKNOWN({fid_str})'
             logger.debug(f'  {key_str}: "{ret}"')
 
-        order_id = self.ocx.get_chejan_data(Fid.주문번호.value)
         code = self.ocx.get_chejan_data(Fid.종목코드.value)
         code = code[1:]  # Remove 'A'
         name = self.ocx.get_chejan_data(Fid.종목명.value)
 
-        logger.info('temp')
-
         if gubun == '0':  # 주문접수 or 주문체결
+            order_id = self.ocx.get_chejan_data(Fid.주문번호.value)
             status = self.ocx.get_chejan_data(Fid.주문상태.value)  # '접수' or '체결'
             order_type = self.ocx.get_chejan_data(Fid.매도수구분.value)  # '1':매도, '2':매수
             time_str = self.ocx.get_chejan_data(Fid.주문_체결시간.value)  # 주문/체결시간 (HHMMSSMS)
+            if status == '접수':
+                logger.info(
+                    f'{name}({code}) 주문접수. order_id:{order_id}, order_type:{order_type}, time_str: {time_str}')
             if status == '체결':
-                logger.info('체결 신호!!!')
+                remained_qty = self.ocx.get_chejan_data(Fid.미체결수량.value)
+                remained_qty = int(remained_qty)
+                logger.info(f'{name}({code}) 주문체결. order_id:{order_id}, order_type:{order_type}, '
+                            f'time_str: {time_str}, remained_qty:{remained_qty}')
+                stock = self.data_manager.get_stock(code)
+
+                if order_type == '1':  # 매도
+                    stock.remained_sell_qty = remained_qty
+
                 if order_type == '2':  # 매수
+                    stock.remained_buy_qty = remained_qty
                     # TODO: 종목 실시간 등록 및 조건식 실시간 재적용(?)
-                    pass
+
         elif gubun == '1':  # 잔고통보
             qty = int(self.ocx.get_chejan_data(Fid.보유수량.value))
+            order_type = self.ocx.get_chejan_data(Fid.매도_매수구분.value)  # '1':매도, '2':매수
+            buy_price = self.ocx.get_chejan_data(Fid.매입단가.value)
+            logger.info(f'{name}({code}) 잔고통보. order_type:{order_type}, qty:{qty}, buy_price:{buy_price}')
+            stock = self.data_manager.get_stock(code)
+            stock.qty = qty
+            stock.buy_price = buy_price
             if qty == 0:
                 logger.info(f'{name}({code}) 청산 완료!!')
-                self.data_manager.remove_stock(code)
+                # TODO: 매수 전략 다른 게 있으면, 계속 실시간 받아야 함.
                 self.ocx.set_real_remove(ScreenNo.REAL.value, code)
-            else:
-                logger.info(f'{name}({code}) qty:{qty}')
-                stock = self.data_manager.get_stock(code)
-                stock.qty = qty
 
     def on_receive_condition_ver(self, ret: int, msg: str):
         logger.debug(f'ret: {ret}, msg: {msg}')  # ret: 사용자 조건식 저장 성공여부 (1: 성공, 나머지 실패)

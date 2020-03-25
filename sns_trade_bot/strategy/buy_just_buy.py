@@ -18,8 +18,8 @@ class BuyJustBuy(StrategyBase):
 
     def on_price_updated(self):
         logger.info('JustBuy')
-        if self.is_queued:
-            logger.info('is_queued. do nothing')
+        if self.stock.remained_buy_qty:
+            logger.info(f'remained_buy_qty:{self.stock.remained_buy_qty}. do nothing')
             return
 
         self.stock.target_qty = (self.budget * 1000) // self.stock.cur_price
@@ -27,4 +27,3 @@ class BuyJustBuy(StrategyBase):
         order_qty = self.stock.target_qty - self.stock.qty
         logger.info(f'JustBuy!!!! order_qty:{order_qty}')
         self.stock.on_buy_signal(self.NAME, order_qty)
-        self.is_queued = True

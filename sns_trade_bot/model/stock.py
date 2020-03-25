@@ -17,6 +17,8 @@ class Stock:
         self.buy_strategy_dic: dict = {}
         self.sell_strategy_dic: dict = {}
         self.target_qty: int = 0  # 목표보유수량
+        self.remained_buy_qty: int = 0
+        self.remained_sell_qty: int = 0
 
     def __str__(self):
         return f'({self.code} {self.name} {self.cur_price} {self.buy_price} {self.qty} ' \
@@ -66,11 +68,13 @@ class Stock:
         logger.info(f'buy_signal!! {self.name}. strategy:{the_strategy_name}, qty:{the_order_qty}')
         for listener in self.listener_list:
             listener.on_buy_signal(self.code, the_order_qty)
+        self.remained_buy_qty = the_order_qty
 
     def on_sell_signal(self, the_strategy_name: str, the_order_qty: int):
         logger.info(f'sell_signal!! {self.name}. strategy:{the_strategy_name}, qty:{the_order_qty}')
         for listener in self.listener_list:
             listener.on_sell_signal(self.code, the_order_qty)
+        self.remained_sell_qty = the_order_qty
 
     def update_earning_rate(self):
         if self.qty == 0:

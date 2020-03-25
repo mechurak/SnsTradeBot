@@ -18,11 +18,10 @@ class SellJustSell(StrategyBase):
 
     def on_price_updated(self):
         logger.info('JustSell')
-        if self.is_queued:
-            logger.info('is_queued. do nothing')
+        if self.stock.remained_sell_qty:
+            logger.info(f'remained_buy_qty:{self.stock.remained_sell_qty}. do nothing')
             return
 
         order_qty = self.stock.qty * self.qty_percent // 100
         logger.info(f'JustSell!!!! order_qty:{order_qty}, qty:{self.stock.qty}, qty_percent:{self.qty_percent}')
         self.stock.on_sell_signal(self.NAME, order_qty)
-        self.is_queued = True

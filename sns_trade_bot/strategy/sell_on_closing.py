@@ -13,8 +13,8 @@ class SellOnClosing(StrategyBase):
 
     def on_time(self, cur_time_str):
         logger.info(f'SellOnClosing. time:{cur_time_str}. {self.stock.name}')
-        if self.is_queued:
-            logger.info("is_queued. do nothing")
+        if self.stock.remained_sell_qty:
+            logger.info(f'remained_buy_qty:{self.stock.remained_sell_qty}. do nothing')
             return
 
         if self.stock.qty > 0:

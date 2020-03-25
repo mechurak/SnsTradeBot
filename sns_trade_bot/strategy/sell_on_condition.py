@@ -21,8 +21,8 @@ class SellOnCondition(StrategyBase):
 
     def on_condition(self, the_index, the_name):
         logger.info(f'index:{the_index}, condition_name:{the_name}, 종목명:{self.stock.name}')
-        if self.is_queued:
-            logger.info('is_queued. do nothing')
+        if self.stock.remained_sell_qty:
+            logger.info(f'remained_buy_qty:{self.stock.remained_sell_qty}. do nothing')
             return
 
         if self.stock.qty == 0:

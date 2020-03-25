@@ -20,8 +20,8 @@ class SellStopLoss(StrategyBase):
         return {'threshold': self.threshold}
 
     def on_price_updated(self):
-        if self.is_queued:
-            logger.info('is_queued. do nothing')
+        if self.stock.remained_sell_qty:
+            logger.info(f'remained_buy_qty:{self.stock.remained_sell_qty}. do nothing')
             return
 
         if self.stock.qty == 0:
