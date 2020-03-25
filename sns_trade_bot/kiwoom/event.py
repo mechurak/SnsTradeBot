@@ -30,8 +30,9 @@ class KiwoomEventHandler(EventHandler):
     def on_receive_tr_data(self, screen_no: str, rq_name: str, tr_code: str, record_name: str, pre_next: str, unused1,
                            unused2, unused3, unused4):
         logger.debug(
-            f'screen_no:{screen_no}, rq_name:{rq_name}, tr_code:{tr_code}, record_name:{record_name}, '
-            f'pre_next:{pre_next}, unused1:{unused1}, unused2:{unused2}, unused3:{unused3}, unused4:{unused4}')
+            f'screen_no:"{screen_no}", rq_name:"{rq_name}", tr_code:"{tr_code}", record_name:"{record_name}", '
+            f'pre_next:"{pre_next}", unused1:"{unused1}", unused2:"{unused2}", unused3:"{unused3}", '
+            f'unused4:"{unused4}"')
 
         if rq_name == RqName.INTEREST_CODE.value:
             count = self.ocx.get_repeat_cnt(tr_code)
@@ -45,7 +46,7 @@ class KiwoomEventHandler(EventHandler):
                 stock = self.data_manager.get_stock(code)
                 stock.name = name
                 stock.cur_price = price
-                logger.info(f'code:{code}, name:{name}, price:{price}')
+                logger.info(f'{name}({code}) price:"{price}"')
             self.ocx.disconnect_real_data(ScreenNo.INTEREST)
             self.data_manager.set_updated(DataType.TABLE_BALANCE)
         elif rq_name == RqName.BALANCE.value:
@@ -62,7 +63,7 @@ class KiwoomEventHandler(EventHandler):
             buy_total = int(buy_total_str)
             print_count = int(print_count_str)
             count = self.ocx.get_repeat_cnt(tr_code)
-            logger.info(f'account_name:{account_name}, cur_balance:{cur_balance}, cash:{cash}, cash2:{cash2}, '
+            logger.info(f'account_name:"{account_name}", cur_balance:{cur_balance}, cash:{cash}, cash2:{cash2}, '
                         f'buy_total:{buy_total}, print_count:{print_count}, count:{count}')
             for i in range(count):
                 self.print_tr_data(tr_code, record_name, i, TrResultKey.BALANCE_MULTI)
@@ -77,8 +78,8 @@ class KiwoomEventHandler(EventHandler):
                 buy_price = int(buy_price_str)
                 cur_price = int(cur_price_str)
                 earning_rate = float(earning_rate_str) / 10000
-                logger.info(f'code:{code}, name:{name}, qty:{qty}, buy_price:{buy_price}, '
-                            f'cur_price:{cur_price}, earning_rate:{earning_rate}')
+                logger.info(f'{name}({code}) qty:{qty}, buy_price:{buy_price}, cur_price:{cur_price}, '
+                            f'earning_rate:{earning_rate}')
                 stock = self.data_manager.get_stock(code)
                 stock.name = name
                 stock.cur_price = cur_price
@@ -97,17 +98,17 @@ class KiwoomEventHandler(EventHandler):
                 stock = self.data_manager.get_stock(code)
                 stock.name = name
                 stock.cur_price = price
-                logger.info(f'code:{code}, name:{name}, price:{price}')
+                logger.info(f'{name}({code}) price:{price}')
                 self.data_manager.set_updated(DataType.TABLE_BALANCE)
             else:
                 logger.error("error!!")
         elif rq_name == RqName.ORDER.value:
-            order_id = self.ocx.get_comm_data(tr_code, record_name, 0, '종목코드').strip()
-            logger.info(f'order_id:{order_id}')
+            order_id = self.ocx.get_comm_data(tr_code, record_name, 0, '주문번호').strip()
+            logger.info(f'order_id:"{order_id}"')
             # TODO: Handle error case (empty order_id)
 
     def on_receive_real_data(self, code: str, real_type: str, real_data: str):
-        logger.debug(f"code:{code} real_type:{real_type} real_data:{real_data}")
+        logger.debug(f'code:"{code}", real_type:"{real_type}", real_data:"{real_data}"')
         if real_type == '장시작시간':
             # TODO: Trigger time related strategy
             pass
@@ -128,7 +129,7 @@ class KiwoomEventHandler(EventHandler):
                     strategy.on_price_updated()
 
     def on_receive_msg(self, scr_no: str, rq_name: str, tr_code: str, msg: str):
-        logger.info(f'scr_no:{scr_no}, rq_name:{rq_name}, tr_code:{tr_code}, msg:{msg}')
+        logger.info(f'scr_no:"{scr_no}", rq_name:"{rq_name}", tr_code:"{tr_code}", msg:"{msg}"')
 
     def on_receive_chejan_data(self, gubun: str, item_cnt: int, fid_list: str):
         """체결 데이터를 받은 시점을 알려준다
@@ -137,7 +138,7 @@ class KiwoomEventHandler(EventHandler):
         :param item_cnt: 아이템 개수
         :param fid_list: 데이터리스트 (';'로 구분)
         """
-        logger.info(f'gubun:{gubun}, item_cnt:{item_cnt}, fid_list:{fid_list}')
+        logger.info(f'gubun:"{gubun}", item_cnt:{item_cnt}, fid_list:"{fid_list}"')
         fid_str_list = fid_list.split(";")
         for fid_str in fid_str_list:
             fid = int(fid_str)
@@ -156,12 +157,12 @@ class KiwoomEventHandler(EventHandler):
             time_str = self.ocx.get_chejan_data(Fid.주문_체결시간.value)  # 주문/체결시간 (HHMMSSMS)
             if status == '접수':
                 logger.info(
-                    f'{name}({code}) 주문접수. order_id:{order_id}, order_type:{order_type}, time_str: {time_str}')
+                    f'{name}({code}) 주문접수. order_id:"{order_id}", order_type:"{order_type}", time_str:"{time_str}"')
             if status == '체결':
                 remained_qty = self.ocx.get_chejan_data(Fid.미체결수량.value)
                 remained_qty = int(remained_qty)
-                logger.info(f'{name}({code}) 주문체결. order_id:{order_id}, order_type:{order_type}, '
-                            f'time_str: {time_str}, remained_qty:{remained_qty}')
+                logger.info(f'{name}({code}) 주문체결. order_id:"{order_id}", order_type:"{order_type}", '
+                            f'time_str:"{time_str}", remained_qty:{remained_qty}')
                 stock = self.data_manager.get_stock(code)
 
                 if order_type == '1':  # 매도
@@ -174,8 +175,8 @@ class KiwoomEventHandler(EventHandler):
         elif gubun == '1':  # 잔고통보
             qty = int(self.ocx.get_chejan_data(Fid.보유수량.value))
             order_type = self.ocx.get_chejan_data(Fid.매도_매수구분.value)  # '1':매도, '2':매수
-            buy_price = self.ocx.get_chejan_data(Fid.매입단가.value)
-            logger.info(f'{name}({code}) 잔고통보. order_type:{order_type}, qty:{qty}, buy_price:{buy_price}')
+            buy_price = int(self.ocx.get_chejan_data(Fid.매입단가.value))
+            logger.info(f'{name}({code}) 잔고통보. order_type:"{order_type}", qty:{qty}, buy_price:{buy_price}')
             stock = self.data_manager.get_stock(code)
             stock.qty = qty
             stock.buy_price = buy_price
@@ -185,7 +186,7 @@ class KiwoomEventHandler(EventHandler):
                 self.ocx.set_real_remove(ScreenNo.REAL.value, code)
 
     def on_receive_condition_ver(self, ret: int, msg: str):
-        logger.debug(f'ret: {ret}, msg: {msg}')  # ret: 사용자 조건식 저장 성공여부 (1: 성공, 나머지 실패)
+        logger.debug(f'ret:{ret}, msg:"{msg}"')  # ret: 사용자 조건식 저장 성공여부 (1: 성공, 나머지 실패)
         condition_name_dic = self.ocx.get_condition_name_list()
         logger.debug(condition_name_dic)
         self.data_manager.set_condition_list(condition_name_dic)
@@ -199,11 +200,11 @@ class KiwoomEventHandler(EventHandler):
         for code in code_list:
             name = self.ocx.get_master_code_name(code)
             temp_stock_list.append(Stock(self.data_manager.listener_list, code, name))
-            logger.debug("code: %s, name: %s", code, name)
+            logger.debug(f'  {name}({code})')
         self.data_manager.set_temp_stock_list(temp_stock_list)
 
     def print_tr_data(self, tr_code, record_name, index, item_list):
-        logger.debug(f'---- tr_code: {tr_code}, record_name: {record_name}, index: {index}')
+        logger.debug(f'---- tr_code:"{tr_code}", record_name:"{record_name}", index:{index}')
         for item in item_list:
             out_str = self.ocx.get_comm_data(tr_code, record_name, index, item)
-            logger.debug(f'"{item}" : "{out_str}"')
+            logger.debug(f'  "{item}" : "{out_str}"')

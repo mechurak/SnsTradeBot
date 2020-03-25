@@ -46,7 +46,7 @@ class Kiwoom:
     def worker_run(self):
         while True:
             job = self.tr_queue.get()
-            logger.info(f'{job.fn.__name__}{job.args}.')
+            logger.debug(f'{job.fn.__name__}{job.args}.')
             ret = job()
             logger.info(f'{job.fn.__name__}{job.args}. ret:{ret}')
             time.sleep(0.2)
@@ -54,31 +54,31 @@ class Kiwoom:
 
     def tr_connect(self):
         job = Job(self.ocx.comm_connect)
-        logger.info(f'tr_connect(). put')
+        logger.debug(f'tr_connect(). put')
         self.tr_queue.put(job)
 
     def tr_load_condition_list(self):
         job_item = Job(self.ocx.get_condition_load)
-        logger.info(f'tr_load_condition_list(). put {self.tr_queue}')
+        logger.debug(f'tr_load_condition_list(). put')
         self.tr_queue.put(job_item)
 
     def tr_check_condition(self, condition: Condition):
         query_type = 0  # 일반조회
         job = Job(self.ocx.send_condition, ScreenNo.CONDITION.value, condition.name, condition.index, query_type)
-        logger.info(f'tr_check_condition(). put')
+        logger.debug(f'tr_check_condition(). put')
         self.tr_queue.put(job)
 
     def tr_register_condition(self, condition: Condition):
         query_type = 1  # 실시간조회
         job = Job(self.ocx.send_condition, ScreenNo.CONDITION.value, condition.name, condition.index, query_type)
-        logger.info(f'tr_register_condition(). put')
+        logger.debug(f'tr_register_condition(). put')
         self.tr_queue.put(job)
 
     def tr_multi_code_detail(self, the_code_list: List[str]):
         """ 복수 종목에 대한 기본 정보 요청
         """
         job = Job(self.ocx.comm_kw_rq_data, the_code_list)
-        logger.info(f'tr_multi_code_detail(). put')
+        logger.debug(f'tr_multi_code_detail(). put')
         self.tr_queue.put(job)
 
     def set_real_reg(self, the_code_list: List[str]):
@@ -89,34 +89,34 @@ class Kiwoom:
 
     def tr_account_detail(self):
         job = Job(self.ocx.request_account_detail)
-        logger.info(f'tr_account_detail(). put')
+        logger.debug(f'tr_account_detail(). put')
         self.tr_queue.put(job)
 
     def tr_code_info(self, the_code: str):
         job = Job(self.ocx.request_code_info, the_code)
-        logger.info(f'tr_code_info(). put')
+        logger.debug(f'tr_code_info(). put')
         self.tr_queue.put(job)
 
     def tr_buy_order(self, the_code: str, the_qty: int):
-        logger.info(f'tr_buy_order(). the_code:{the_code}, the_qty:{the_qty}')
+        logger.debug(f'tr_buy_order(). the_code:{the_code}, the_qty:{the_qty}')
         order_type = 1  # 신규매수
         price = 0
         hoga_gb = '03'  # 시장가
         org_order_no = ''
         job = Job(self.ocx.send_order, RqName.ORDER.value, ScreenNo.ORDER.value, self.data_manager.account, order_type,
                   the_code, the_qty, price, hoga_gb, org_order_no)
-        logger.info(f'tr_buy_order(). put')
+        logger.debug(f'tr_buy_order(). put')
         self.tr_queue.put(job)
 
     def tr_sell_order(self, the_code: str, the_qty: int):
-        logger.info(f'tr_sell_order(). the_code:{the_code}, the_qty:{the_qty}')
+        logger.debug(f'tr_sell_order(). the_code:{the_code}, the_qty:{the_qty}')
         order_type = 2  # 신규매도
         price = 0
         hoga_gb = '03'  # 시장가
         org_order_no = ''
         job = Job(self.ocx.send_order, RqName.ORDER.value, ScreenNo.ORDER.value, self.data_manager.account, order_type,
                   the_code, the_qty, price, hoga_gb, org_order_no)
-        logger.info(f'tr_sell_order(). put')
+        logger.debug(f'tr_sell_order(). put')
         self.tr_queue.put(job)
 
 

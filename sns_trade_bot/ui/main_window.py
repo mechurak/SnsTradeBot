@@ -187,7 +187,7 @@ class MainWindow(QMainWindow, ModelListener):
             if item.column() == 0:  # 종목코드
                 code = item.text()
                 self.data_manager.selected_code_list.append(code)
-                logger.info(f'{code}: {item.row()} {item.column()} {item.text()}')
+                logger.debug(f'{code}: {item.row()} {item.column()} {item.text()}')
 
     @pyqtSlot(QTableWidgetItem)
     def on_table_balance_item_changed(self, item):
@@ -198,7 +198,6 @@ class MainWindow(QMainWindow, ModelListener):
             code = code_item.text()
             stock = self.data_manager.get_stock(code)
             stock.target_qty = target_qty
-            logger.debug(f'{code}: {target_qty}')
 
     # ModelListener
     def on_buy_signal(self, code: str, qty: int):
@@ -208,7 +207,7 @@ class MainWindow(QMainWindow, ModelListener):
         pass
 
     def on_data_updated(self, data_type: DataType):
-        logger.info(f"data_type: {data_type}")
+        logger.debug(f"data_type: {data_type}")
         if data_type == DataType.COMBO_ACCOUNT:
             self.combo_account.clear()
             self.combo_account.addItems(self.data_manager.account_list)
