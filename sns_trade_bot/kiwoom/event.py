@@ -2,7 +2,7 @@ import logging
 
 from sns_trade_bot.model.data_manager import DataManager, DataType
 from sns_trade_bot.model.stock import Stock
-from sns_trade_bot.kiwoom.common import ScreenNo, RqName, EventHandler, TrResultKey, Fid
+from sns_trade_bot.kiwoom.common import Job, ScreenNo, RqName, EventHandler, TrResultKey, Fid
 from sns_trade_bot.kiwoom.internal import KiwoomOcx
 
 logger = logging.getLogger(__name__)
@@ -12,9 +12,10 @@ class KiwoomEventHandler(EventHandler):
     data_manager: DataManager
     ocx: KiwoomOcx
 
-    def __init__(self, the_data_manager, the_ocx):
+    def __init__(self, the_data_manager, the_ocx, the_tr_queue):
         self.data_manager = the_data_manager
         self.ocx = the_ocx
+        self.tr_queue = the_tr_queue
 
     def on_event_connect(self, err_code):
         if err_code == 0:
@@ -171,6 +172,11 @@ class KiwoomEventHandler(EventHandler):
                 if order_type == '2':  # 매수
                     stock.remained_buy_qty = remained_qty
                     # TODO: 종목 실시간 등록 및 조건식 실시간 재적용(?)
+                    
+                if remained_qty == 0:
+                    from sns_trade_bot.slack.webhook import MsgSender
+                    send_balance_job = Job(MsgSender.send_balance, list(self.data_manager.stock_dic.values()))
+                    self.tr_queue.put(send_balance_job)
 
         elif gubun == '1':  # 잔고통보
             qty = int(self.ocx.get_chejan_data(Fid.보유수량.value))

@@ -1,1 +1,2 @@
 slack_api_token = "xoxb-00000000000-000000000000-aaaaaaaaaaaaaaaaaaaaaaaa"
+webhook_url = 'https://hooks.slack.com/services/TTTTTTTTT/BBBBBBBBBBB/aaaaaaaaaaaaaaaaaaaaaaaa'

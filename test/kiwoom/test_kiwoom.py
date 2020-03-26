@@ -46,12 +46,13 @@ class TestKiwoom(unittest.TestCase):
         logger.info('test for job_queue()')
 
         def temp_send_order(rq_name: str, screen_no: str, acc_no: str, order_type: int, code: str, qty: int, price: int,
-                   hoga_gb: str, org_order_no: str):
+                            hoga_gb: str, org_order_no: str):
             logger.info(f'send_order(). order_type:{order_type}, code:{code}, qty:{qty}')
             return 1
 
         self.kiwoom_manager.ocx.send_order = Mock(side_effects=temp_send_order)
         self.kiwoom_manager.ocx.send_order.__name__ = 'temp_send_order'
+        self.kiwoom_manager.ocx.get_master_code_name = Mock(return_value='Temp종목')
 
         stock0001 = self.data_manager.get_stock('0001')
         stock0001.name = '테스트종목'

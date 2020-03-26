@@ -73,6 +73,8 @@ class DataManager:
         logger.info(f' - stock_dic[{len(self.stock_dic)}]:')
         for k, v in self.stock_dic.items():
             logger.info(f'  {k}: {v}')
+        from sns_trade_bot.slack.webhook import MsgSender
+        MsgSender.send_balance(list(self.stock_dic.values()))
 
     def add_listener(self, the_listener: ModelListener):
         self.listener_list.append(the_listener)

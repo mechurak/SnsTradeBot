@@ -9,21 +9,12 @@ from typing import List
 
 from PyQt5.QtWidgets import *
 from sns_trade_bot.model.data_manager import DataManager, DataType, ModelListener, Condition
-from sns_trade_bot.kiwoom.common import RqName, ScreenNo
+from sns_trade_bot.kiwoom.common import Job, RqName, ScreenNo
 from sns_trade_bot.kiwoom.internal import KiwoomOcx
 from sns_trade_bot.kiwoom.event import KiwoomEventHandler
+from sns_trade_bot.slack.webhook import MsgSender
 
 logger = logging.getLogger(__name__)
-
-
-class Job:
-    def __init__(self, fn, *args, **kwargs):
-        self.fn = fn
-        self.args = args
-        self.kwargs = kwargs
-
-    def __call__(self):
-        return self.fn(*self.args, **self.kwargs)
 
 
 class Kiwoom:
@@ -35,13 +26,14 @@ class Kiwoom:
         super().__init__()
         self.data_manager = the_data_manager
         self.ocx = KiwoomOcx(self.data_manager)
-        self.handler = KiwoomEventHandler(self.data_manager, self.ocx)
+        self.tr_queue = queue.Queue()
+        self.handler = KiwoomEventHandler(self.data_manager, self.ocx, self.tr_queue)
         self.ocx.set_event_handler(self.handler)
 
-        self.tr_queue = queue.Queue()
         worker_thread = threading.Thread(target=self.worker_run)
         worker_thread.daemon = True
         worker_thread.start()
+        logger.info('start worker_thread')
 
     def worker_run(self):
         while True:
@@ -108,6 +100,11 @@ class Kiwoom:
         logger.debug(f'tr_buy_order(). put')
         self.tr_queue.put(job)
 
+        msg = f'매수주문!! `{self.ocx.get_master_code_name(the_code)}`({the_code}) {the_qty}주'
+        send_msg_job = Job(MsgSender.send_msg, msg)
+        self.tr_queue.put(send_msg_job)
+        logger.debug(f'tr_buy_order(). put send_msg')
+
     def tr_sell_order(self, the_code: str, the_qty: int):
         logger.debug(f'tr_sell_order(). the_code:{the_code}, the_qty:{the_qty}')
         order_type = 2  # 신규매도
@@ -118,6 +115,11 @@ class Kiwoom:
                   the_code, the_qty, price, hoga_gb, org_order_no)
         logger.debug(f'tr_sell_order(). put')
         self.tr_queue.put(job)
+
+        msg = f'매도주문!! `{self.ocx.get_master_code_name(the_code)}`({the_code}) {the_qty}주'
+        send_msg_job = Job(MsgSender.send_msg, msg)
+        self.tr_queue.put(send_msg_job)
+        logger.debug(f'tr_sell_order(). put send_msg')
 
 
 if __name__ == "__main__":

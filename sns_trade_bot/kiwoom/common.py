@@ -1,6 +1,16 @@
 import enum
 
 
+class Job:
+    def __init__(self, fn, *args, **kwargs):
+        self.fn = fn
+        self.args = args
+        self.kwargs = kwargs
+
+    def __call__(self):
+        return self.fn(*self.args, **self.kwargs)
+
+
 class ScreenNo(enum.Enum):
     CONDITION = '1111'  # 조건식
     REAL = '2222'  # 실시간 조회
