@@ -27,3 +27,4 @@ class BuyJustBuy(StrategyBase):
         order_qty = self.stock.target_qty - self.stock.qty
         logger.info(f'JustBuy!!!! order_qty:{order_qty}')
         self.stock.on_buy_signal(self.NAME, order_qty)
+        self.enabled = False

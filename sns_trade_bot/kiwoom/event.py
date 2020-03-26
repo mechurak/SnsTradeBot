@@ -124,10 +124,12 @@ class KiwoomEventHandler(EventHandler):
 
             if stock.qty > 0 and stock.remained_sell_qty == 0:
                 for strategy in stock.sell_strategy_dic.values():
-                    strategy.on_price_updated()
+                    if strategy.enabled:
+                        strategy.on_price_updated()
             if stock.remained_buy_qty == 0:
                 for strategy in stock.buy_strategy_dic.values():
-                    strategy.on_price_updated()
+                    if strategy.enabled:
+                        strategy.on_price_updated()
 
     def on_receive_msg(self, scr_no: str, rq_name: str, tr_code: str, msg: str):
         logger.info(f'scr_no:"{scr_no}", rq_name:"{rq_name}", tr_code:"{tr_code}", msg:"{msg}"')

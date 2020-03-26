@@ -23,5 +23,9 @@ class SellJustSell(StrategyBase):
             return
 
         order_qty = self.stock.qty * self.qty_percent // 100
+        if order_qty == 0:
+            logger.warning(f'order_qty:{order_qty}, qty:{self.stock.qty}, qty_percent:{self.qty_percent}. do nothing')
+            return
         logger.info(f'JustSell!!!! order_qty:{order_qty}, qty:{self.stock.qty}, qty_percent:{self.qty_percent}')
         self.stock.on_sell_signal(self.NAME, order_qty)
+        self.enabled = False

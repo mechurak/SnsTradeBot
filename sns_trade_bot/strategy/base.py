@@ -9,6 +9,8 @@ class StrategyBase:
     BUY_STRATEGY_LIST = ['buy_just_buy', 'buy_on_opening']
     SELL_STRATEGY_LIST = ['sell_on_closing', 'sell_on_condition', 'sell_stop_loss', 'sell_just_sell']
 
+    enabled = True
+
     def __init__(self, the_stock, the_param_dic):
         self.stock = the_stock
         logger.info("StrategyBase. %s, %s", the_stock.name, str(the_param_dic))

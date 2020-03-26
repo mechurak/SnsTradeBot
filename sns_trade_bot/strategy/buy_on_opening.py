@@ -41,3 +41,4 @@ class BuyOnOpening(StrategyBase):
 
         logger.info(f'BuyOnOpening!!!! order_qty:{order_qty}')
         self.stock.on_buy_signal(self.NAME, order_qty)
+        self.enabled = False
