@@ -53,7 +53,7 @@ class DataManager:
     def __init__(self):
         self.account: str = '1234'
         self.account_list: List[str] = ['1234', '4567']
-        self.condition_list: List[Condition] = [Condition(1, 'temp1'), Condition(2, 'temp2')]
+        self.cond_dic: Dict[int, Condition] = {1: Condition(1, 'temp1'), 2: Condition(2, 'temp2')}
         self.stock_dic: Dict[str, Stock] = {}
         self.temp_stock_list: List[Stock] = []
         self.listener_list: List[ModelListener] = []
@@ -146,18 +146,21 @@ class DataManager:
         assert the_account in self.account_list, 'unexpected account!!!'
         self.account = the_account
 
-    def set_condition_list(self, the_condition_dic):
-        self.condition_list = []
+    def set_condition_dic(self, the_condition_dic):
+        self.cond_dic = {}
         for index, name in the_condition_dic.items():
-            self.condition_list.append(Condition(index, name))
+            self.cond_dic[index] = Condition(index, name)
         for listener in self.listener_list:
             listener.on_data_updated(DataType.TABLE_CONDITION)
 
     def get_condition_name_dic(self):
         ret_dic = {}
-        for condition in self.condition_list:
+        for condition in self.cond_dic.values():
             ret_dic[condition.index] = condition.name
         return ret_dic
+
+    def get_condition(self, the_index) -> Condition:
+        return self.cond_dic[the_index]
 
     def set_temp_stock_list(self, temp_stock_list: list):
         self.temp_stock_list = temp_stock_list

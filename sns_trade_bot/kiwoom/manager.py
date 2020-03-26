@@ -168,7 +168,7 @@ if __name__ == "__main__":
     kiwoom_manager.tr_load_condition_list()
     event_loop.exec_()
 
-    target_condition = data_manager.condition_list[0]
+    target_condition = data_manager.cond_dic[3]
     kiwoom_manager.tr_check_condition(target_condition)
     event_loop.exec_()
 

@@ -24,6 +24,7 @@ class KiwoomOcx(QAxWidget):
         self.OnReceiveRealData.connect(event_handler.on_receive_real_data)
         self.OnReceiveMsg.connect(event_handler.on_receive_msg)
         self.OnReceiveChejanData.connect(event_handler.on_receive_chejan_data)
+        self.OnReceiveRealCondition.connect(event_handler.on_receive_real_condition)
 
     def comm_connect(self):
         self.dynamicCall("CommConnect()")

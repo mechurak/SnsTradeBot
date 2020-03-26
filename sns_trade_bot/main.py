@@ -67,7 +67,7 @@ class Manager(UiListener, ModelListener):
         self.kiwoom_manager.tr_load_condition_list()
 
     def btn_query_condition_clicked(self, condition):
-        logger.info(f'btn_query_condition_clicked. {condition.index} {condition.name}')
+        logger.info(f'btn_query_condition_clicked. {condition.index}, {condition.name}')
         self.kiwoom_manager.tr_check_condition(condition)
 
     # ModelListener

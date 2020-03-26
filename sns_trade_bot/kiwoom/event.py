@@ -193,11 +193,34 @@ class KiwoomEventHandler(EventHandler):
                 # TODO: 매수 전략 다른 게 있으면, 계속 실시간 받아야 함.
                 self.ocx.set_real_remove(ScreenNo.REAL.value, code)
 
+    def on_receive_real_condition(self, code: str, event_type: str, cond_name: str, cond_index: str):
+        """조검검색 실시간 편입, 이탈 종목을 받을 시점을 알려준다.
+
+        :param code: 종목코드
+        :param event_type: 편입("I"), 이탈("D")
+        :param cond_name: 조건명
+        :param cond_index: 조건명 인덱스
+        """
+        logger.debug(f'code:{code}, type:{event_type}, cond_name:{cond_name}, cond_index:{cond_index}')
+        condition = self.data_manager.get_condition(int(cond_index))
+
+        if condition.signal_type == "매도신호" and event_type == 'I':  # 매도 조건식 편입
+            if code not in self.data_manager.stock_dic:
+                logger.warning(f'보유 종목 아님. {code}')
+                return
+            stock = self.data_manager.get_stock(code)
+            for sell_strategy in stock.sell_strategy_dic.values():
+                if sell_strategy.enabled:
+                    sell_strategy.on_condition(int(cond_index), cond_name)
+
+        elif condition.signal_type == "매수신호" and event_type == "I":  # 매수 조건식 편입
+            pass
+
     def on_receive_condition_ver(self, ret: int, msg: str):
         logger.debug(f'ret:{ret}, msg:"{msg}"')  # ret: 사용자 조건식 저장 성공여부 (1: 성공, 나머지 실패)
         condition_name_dic = self.ocx.get_condition_name_list()
         logger.debug(condition_name_dic)
-        self.data_manager.set_condition_list(condition_name_dic)
+        self.data_manager.set_condition_dic(condition_name_dic)
 
     def on_receive_tr_condition(self, scr_no, str_code_list, str_condition_name, index, has_next):
         logger.debug(f'{scr_no} {str_code_list} {str_condition_name} {index} {has_next}')
@@ -206,6 +229,8 @@ class KiwoomEventHandler(EventHandler):
         logger.debug("code_list: %s", code_list)
         temp_stock_list = []
         for code in code_list:
+            if len(code) == 0:
+                continue
             name = self.ocx.get_master_code_name(code)
             temp_stock_list.append(Stock(self.data_manager.listener_list, code, name))
             logger.debug(f'  {name}({code})')

@@ -99,6 +99,9 @@ class EventHandler:
     def on_receive_tr_condition(self, scr_no, str_code_list, str_condition_name, index, has_next):
         pass
 
+    def on_receive_real_condition(self, code: str, event_type: str, cond_name: str, cond_index: str):
+        pass
+
 
 class TrResultKey:
     BALANCE_SINGLE = [

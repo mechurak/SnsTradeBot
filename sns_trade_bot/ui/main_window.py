@@ -234,8 +234,8 @@ class MainWindow(QMainWindow, ModelListener):
             header = ["인덱스", "조건명", "신호종류", "적용유무", "요청버튼"]
             self.table_condition.setColumnCount(len(header))
             self.table_condition.setHorizontalHeaderLabels(header)
-            self.table_condition.setRowCount(len(self.data_manager.condition_list))
-            for i, condition in enumerate(self.data_manager.condition_list):
+            self.table_condition.setRowCount(len(self.data_manager.cond_dic))
+            for i, condition in enumerate(self.data_manager.cond_dic.values()):
                 def btn_callback(c):
                     return lambda: self.listener.btn_query_condition_clicked(c)
 
