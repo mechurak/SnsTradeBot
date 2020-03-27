@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1031</width>
-    <height>808</height>
+    <width>1085</width>
+    <height>848</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,9 +18,9 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>400</y>
-      <width>661</width>
-      <height>361</height>
+      <y>500</y>
+      <width>1061</width>
+      <height>291</height>
      </rect>
     </property>
     <property name="title">
@@ -29,10 +29,10 @@
     <widget class="QPushButton" name="btn_refresh_condition">
      <property name="geometry">
       <rect>
-       <x>10</x>
-       <y>20</y>
-       <width>75</width>
-       <height>23</height>
+       <x>704</x>
+       <y>50</y>
+       <width>61</width>
+       <height>61</height>
       </rect>
      </property>
      <property name="text">
@@ -43,9 +43,9 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>50</y>
-       <width>531</width>
-       <height>141</height>
+       <y>20</y>
+       <width>651</width>
+       <height>261</height>
       </rect>
      </property>
      <property name="rowCount">
@@ -74,37 +74,11 @@
      <column/>
      <column/>
     </widget>
-    <widget class="QTableWidget" name="table_temp_stock">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>230</y>
-       <width>241</width>
-       <height>121</height>
-      </rect>
-     </property>
-     <property name="rowCount">
-      <number>5</number>
-     </property>
-     <property name="columnCount">
-      <number>2</number>
-     </property>
-     <attribute name="verticalHeaderVisible">
-      <bool>false</bool>
-     </attribute>
-     <row/>
-     <row/>
-     <row/>
-     <row/>
-     <row/>
-     <column/>
-     <column/>
-    </widget>
     <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
-       <x>10</x>
-       <y>200</y>
+       <x>790</x>
+       <y>20</y>
        <width>233</width>
        <height>30</height>
       </rect>
@@ -126,14 +100,92 @@
       </item>
      </layout>
     </widget>
+    <widget class="QTableWidget" name="table_temp_stock">
+     <property name="geometry">
+      <rect>
+       <x>790</x>
+       <y>50</y>
+       <width>241</width>
+       <height>121</height>
+      </rect>
+     </property>
+     <property name="rowCount">
+      <number>5</number>
+     </property>
+     <property name="columnCount">
+      <number>2</number>
+     </property>
+     <attribute name="verticalHeaderVisible">
+      <bool>false</bool>
+     </attribute>
+     <row/>
+     <row/>
+     <row/>
+     <row/>
+     <row/>
+     <column/>
+     <column/>
+    </widget>
+    <widget class="QWidget" name="gridLayoutWidget_6">
+     <property name="geometry">
+      <rect>
+       <x>700</x>
+       <y>190</y>
+       <width>331</width>
+       <height>91</height>
+      </rect>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_6">
+      <item row="2" column="0">
+       <widget class="QPushButton" name="btn_cond_type_apply">
+        <property name="text">
+         <string>선택 조건식에 적용</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QComboBox" name="combo_cond_type"/>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_8">
+        <property name="text">
+         <string>신호종류</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLabel" name="label_10">
+        <property name="text">
+         <string>적용유무</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QComboBox" name="combo_cond_enabled"/>
+      </item>
+      <item row="2" column="1">
+       <widget class="QPushButton" name="btn_cond_enabled_apply">
+        <property name="text">
+         <string>선택 조건식에 적용</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
    </widget>
    <widget class="QGroupBox" name="groupBox_3">
     <property name="geometry">
      <rect>
       <x>10</x>
       <y>80</y>
-      <width>1011</width>
-      <height>311</height>
+      <width>1061</width>
+      <height>401</height>
      </rect>
     </property>
     <property name="title">
@@ -145,7 +197,7 @@
        <x>10</x>
        <y>20</y>
        <width>651</width>
-       <height>241</height>
+       <height>321</height>
       </rect>
      </property>
      <property name="selectionMode">
@@ -191,7 +243,7 @@
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>270</y>
+       <y>350</y>
        <width>181</width>
        <height>30</height>
       </rect>
@@ -220,7 +272,7 @@
      <property name="geometry">
       <rect>
        <x>297</x>
-       <y>270</y>
+       <y>350</y>
        <width>361</width>
        <height>30</height>
       </rect>
@@ -247,7 +299,7 @@
       <rect>
        <x>670</x>
        <y>20</y>
-       <width>311</width>
+       <width>377</width>
        <height>151</height>
       </rect>
      </property>
@@ -456,8 +508,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1031</width>
-     <height>21</height>
+     <width>1085</width>
+     <height>26</height>
     </rect>
    </property>
   </widget>
