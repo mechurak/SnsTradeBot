@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import QApplication
 from sns_trade_bot.ui.main_window import MainWindow, UiListener
 from sns_trade_bot.kiwoom.manager import Kiwoom
 from sns_trade_bot.model.data_manager import DataManager, HoldType, ModelListener, DataType
+from sns_trade_bot.model.condition import Condition, SignalType
 import sns_trade_bot.slack.run
 import threading
 
@@ -66,9 +67,21 @@ class Manager(UiListener, ModelListener):
         logger.info("btn_refresh_condition_list_clicked")
         self.kiwoom_manager.tr_load_condition_list()
 
+    def combo_signal_type_changed(self, condition, signal_type_index):
+        logger.info(f'combo_signal_type_changed. {condition}: {signal_type_index}')
+        condition.signal_type = SignalType(signal_type_index)
+
     def btn_query_condition_clicked(self, condition):
         logger.info(f'btn_query_condition_clicked. {condition.index}, {condition.name}')
         self.kiwoom_manager.tr_check_condition(condition)
+
+    def btn_register_condition_list_clicked(self):
+        logger.info("btn_register_condition_list_clicked")
+        cond_list = []
+        for cond in self.data_manager.cond_dic.values():
+            if cond.signal_type is not SignalType.UNDEFINED:
+                cond_list.append(cond)
+        self.kiwoom_manager.tr_register_condition_list(cond_list)
 
     # ModelListener
     def on_data_updated(self, data_type: DataType):

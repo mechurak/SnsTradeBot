@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 from sns_trade_bot.model.data_manager import DataManager, ModelListener, DataType
+from sns_trade_bot.model.condition import Condition, SignalType
 from sns_trade_bot.strategy.base import StrategyBase
 from abc import abstractmethod
 
@@ -42,7 +43,15 @@ class UiListener:
         pass
 
     @abstractmethod
+    def combo_signal_type_changed(self, condition, signal_type_index):
+        pass
+
+    @abstractmethod
     def btn_query_condition_clicked(self, condition):
+        pass
+
+    @abstractmethod
+    def btn_register_condition_list_clicked(self):
         pass
 
 
@@ -86,6 +95,7 @@ class MainWindow(QMainWindow, ModelListener):
         self.btn_real.clicked.connect(self.listener.btn_real_clicked)
         self.btn_code_add.clicked.connect(self._on_btn_code_add_clicked)
         self.btn_refresh_condition.clicked.connect(self.listener.btn_refresh_condition_list_clicked)
+        self.btn_register_condition.clicked.connect(self.listener.btn_register_condition_list_clicked)
 
     def _on_btn_code_add_clicked(self):
         code = self.edit_code.text()
@@ -231,21 +241,35 @@ class MainWindow(QMainWindow, ModelListener):
                 self.table_balance.setItem(i, 8, QTableWidgetItem(str(list(stock.sell_strategy_dic.keys()))))
             self.table_balance.setSortingEnabled(True)
         elif data_type == DataType.TABLE_CONDITION:
-            header = ["인덱스", "조건명", "신호종류", "적용유무", "요청버튼"]
+            header = ["인덱스", "조건명", "신호종류", "요청버튼"]
             self.table_condition.setColumnCount(len(header))
             self.table_condition.setHorizontalHeaderLabels(header)
             self.table_condition.setRowCount(len(self.data_manager.cond_dic))
             for i, condition in enumerate(self.data_manager.cond_dic.values()):
+                def combo_callback(c):
+                    logger.info(f'combo_callback {c}')
+                    return lambda signal_index: self.listener.combo_signal_type_changed(c, signal_index)
+
+                # def combo_callback(index):
+                #     logger.info(f'{condition}: {index}')
+                #     condition.signal_type = SignalType(index)
+
                 def btn_callback(c):
                     return lambda: self.listener.btn_query_condition_clicked(c)
 
                 self.table_condition.setItem(i, 0, QTableWidgetItem(str(condition.index)))
                 self.table_condition.setItem(i, 1, QTableWidgetItem(condition.name))
-                self.table_condition.setItem(i, 2, QTableWidgetItem(condition.signal_type))
-                self.table_condition.setItem(i, 3, QTableWidgetItem(condition.enabled))
+
+                combo = QComboBox()
+                combo.addItems(SignalType.__members__.keys())
+                combo.setCurrentText(condition.signal_type.name)
+                combo.currentIndexChanged.connect(combo_callback(condition))
+                self.table_condition.setCellWidget(i, 2, combo)
+
                 button = QPushButton('조회 및 요청')
                 button.clicked.connect(btn_callback(condition))
-                self.table_condition.setCellWidget(i, 4, button)
+                self.table_condition.setCellWidget(i, 3, button)
+
         elif data_type == DataType.TABLE_TEMP_STOCK:
             header = ["종목코드", "종목명"]
             self.table_temp_stock.setColumnCount(len(header))
@@ -290,8 +314,15 @@ if __name__ == "__main__":
         def btn_refresh_condition_list_clicked(self):
             logger.info("btn_refresh_condition_list_clicked")
 
+        def combo_signal_type_changed(self, condition, signal_type_index):
+            logger.info(f'combo_signal_type_changed. {condition}: {signal_type_index}')
+            condition.signal_type = SignalType(signal_type_index)
+
         def btn_query_condition_clicked(self, condition):
             logger.info(f'btn_query_condition_clicked. {condition.index} {condition.name}')
+
+        def btn_register_condition_list_clicked(self):
+            logger.info("btn_register_condition_list_clicked")
 
 
     app = QApplication(sys.argv)
@@ -299,5 +330,11 @@ if __name__ == "__main__":
     listener = TempListener()
     mainWindow.set_listener(listener)
     data_manager.set_account_list(['123', '678'])
+    stock0001 = data_manager.get_stock('0001')
+    stock0001.name = '테스트종목'
+    stock0002 = data_manager.get_stock('0002')
+    stock0002.name = 'temp종목'
+    data_manager.set_updated(DataType.TABLE_BALANCE)
+    data_manager.set_updated(DataType.TABLE_CONDITION)
     mainWindow.show()
     sys.exit(app.exec_())

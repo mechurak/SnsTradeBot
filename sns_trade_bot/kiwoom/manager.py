@@ -8,7 +8,8 @@ from datetime import datetime
 from typing import List
 
 from PyQt5.QtWidgets import *
-from sns_trade_bot.model.data_manager import DataManager, DataType, ModelListener, Condition
+from sns_trade_bot.model.data_manager import DataManager, DataType, ModelListener
+from sns_trade_bot.model.condition import Condition, SignalType
 from sns_trade_bot.kiwoom.common import Job, RqName, ScreenNo
 from sns_trade_bot.kiwoom.internal import KiwoomOcx
 from sns_trade_bot.kiwoom.event import KiwoomEventHandler
@@ -60,11 +61,12 @@ class Kiwoom:
         logger.debug(f'tr_check_condition(). put')
         self.tr_queue.put(job)
 
-    def tr_register_condition(self, condition: Condition):
+    def tr_register_condition_list(self, cond_list: List[Condition]):
         query_type = 1  # 실시간조회
-        job = Job(self.ocx.send_condition, ScreenNo.CONDITION.value, condition.name, condition.index, query_type)
-        logger.debug(f'tr_register_condition(). put')
-        self.tr_queue.put(job)
+        for cond in cond_list:
+            job = Job(self.ocx.send_condition, ScreenNo.CONDITION.value, cond.name, cond.index, query_type)
+            logger.debug(f'tr_register_condition_list(). put')
+            self.tr_queue.put(job)
 
     def tr_multi_code_detail(self, the_code_list: List[str]):
         """ 복수 종목에 대한 기본 정보 요청

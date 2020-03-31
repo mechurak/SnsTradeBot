@@ -7,6 +7,8 @@ from abc import abstractmethod
 from typing import Dict, List
 
 from sns_trade_bot.model.stock import Stock
+from sns_trade_bot.model.condition import Condition, SignalType
+
 
 logger = logging.getLogger(__name__)
 
@@ -30,14 +32,6 @@ class ModelListener:
     @abstractmethod
     def on_sell_signal(self, code: str, qty: int):
         pass
-
-
-class Condition:
-    def __init__(self, index, name):
-        self.index = index  # 인덱스
-        self.name = name  # 조건명
-        self.signal_type = None
-        self.enabled = False
 
 
 class HoldType(enum.Enum):
@@ -73,8 +67,11 @@ class DataManager:
         logger.info(f' - stock_dic[{len(self.stock_dic)}]:')
         for k, v in self.stock_dic.items():
             logger.info(f'  {k}: {v}')
-        from sns_trade_bot.slack.webhook import MsgSender
-        MsgSender.send_balance(list(self.stock_dic.values()))
+        logger.info(f' - cond_dic[{len(self.cond_dic)}]:')
+        for k, v in self.cond_dic.items():
+            logger.info(f'  {k}: {v}')
+        # from sns_trade_bot.slack.webhook import MsgSender
+        # MsgSender.send_balance(list(self.stock_dic.values()))
 
     def add_listener(self, the_listener: ModelListener):
         self.listener_list.append(the_listener)

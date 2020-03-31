@@ -2,6 +2,7 @@ import logging
 
 from sns_trade_bot.model.data_manager import DataManager, DataType
 from sns_trade_bot.model.stock import Stock
+from sns_trade_bot.model.condition import Condition, SignalType
 from sns_trade_bot.kiwoom.common import Job, ScreenNo, RqName, EventHandler, TrResultKey, Fid
 from sns_trade_bot.kiwoom.internal import KiwoomOcx
 
@@ -202,9 +203,9 @@ class KiwoomEventHandler(EventHandler):
         :param cond_index: 조건명 인덱스
         """
         logger.debug(f'code:{code}, type:{event_type}, cond_name:{cond_name}, cond_index:{cond_index}')
-        condition = self.data_manager.get_condition(int(cond_index))
+        condition: Condition = self.data_manager.get_condition(int(cond_index))
 
-        if condition.signal_type == "매도신호" and event_type == 'I':  # 매도 조건식 편입
+        if condition.signal_type == SignalType.SELL and event_type == 'I':  # 매도 조건식 편입
             if code not in self.data_manager.stock_dic:
                 logger.warning(f'보유 종목 아님. {code}')
                 return
@@ -213,7 +214,7 @@ class KiwoomEventHandler(EventHandler):
                 if sell_strategy.enabled:
                     sell_strategy.on_condition(int(cond_index), cond_name)
 
-        elif condition.signal_type == "매수신호" and event_type == "I":  # 매수 조건식 편입
+        elif condition.signal_type == SignalType.BUY and event_type == "I":  # 매수 조건식 편입
             pass
 
     def on_receive_condition_ver(self, ret: int, msg: str):
