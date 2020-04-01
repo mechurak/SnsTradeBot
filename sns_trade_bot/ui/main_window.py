@@ -247,12 +247,7 @@ class MainWindow(QMainWindow, ModelListener):
             self.table_condition.setRowCount(len(self.data_manager.cond_dic))
             for i, condition in enumerate(self.data_manager.cond_dic.values()):
                 def combo_callback(c):
-                    logger.info(f'combo_callback {c}')
                     return lambda signal_index: self.listener.combo_signal_type_changed(c, signal_index)
-
-                # def combo_callback(index):
-                #     logger.info(f'{condition}: {index}')
-                #     condition.signal_type = SignalType(index)
 
                 def btn_callback(c):
                     return lambda: self.listener.btn_query_condition_clicked(c)

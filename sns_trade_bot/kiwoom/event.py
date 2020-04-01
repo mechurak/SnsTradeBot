@@ -223,9 +223,13 @@ class KiwoomEventHandler(EventHandler):
         logger.debug(condition_name_dic)
         self.data_manager.set_condition_dic(condition_name_dic)
 
-    def on_receive_tr_condition(self, scr_no, str_code_list, str_condition_name, index, has_next):
-        logger.debug(f'{scr_no} {str_code_list} {str_condition_name} {index} {has_next}')
-        code_list_str = str_code_list[:-1]  # 마지막 ";" 제거
+    def on_receive_tr_condition(self, scr_no: str, code_list_str: str, cond_name, index: int, has_next: int):
+        logger.debug(f'scr_no:"{scr_no}", code_list_str:"{code_list_str}", cond_name:"{cond_name}",  index:{index}, '
+                     f'has_next:{has_next}')
+        if len(code_list_str) == 0:
+            return
+
+        code_list_str = code_list_str[:-1]  # 마지막 ";" 제거
         code_list = code_list_str.split(';')
         logger.debug("code_list: %s", code_list)
         temp_stock_list = []

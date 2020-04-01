@@ -140,8 +140,8 @@ class KiwoomOcx(QAxWidget):
         :return: 성공 1, 실패 0
         :callback: _on_receive_tr_condition()
         """
-        ret = self.dynamicCall("SendCondition(QString, QString, int, int)", screen_num, condition_name, condition_index,
-                               query_type)
+        ret = self.dynamicCall("SendCondition(QString, QString, int, int)",
+                               [screen_num, condition_name, condition_index, query_type])
         if ret != 1:
             logger.error(f'ret: {ret}')
         return ret

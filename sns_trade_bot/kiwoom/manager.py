@@ -50,23 +50,20 @@ class Kiwoom:
         logger.debug(f'tr_connect(). put')
         self.tr_queue.put(job)
 
-    def tr_load_condition_list(self):
-        job_item = Job(self.ocx.get_condition_load)
-        logger.debug(f'tr_load_condition_list(). put')
-        self.tr_queue.put(job_item)
+    def load_cond_list(self):
+        ret = self.ocx.get_condition_load()
+        logger.debug(f'get_condition_load(). ret: {ret}')
 
-    def tr_check_condition(self, condition: Condition):
+    def check_cond(self, cond: Condition):
         query_type = 0  # 일반조회
-        job = Job(self.ocx.send_condition, ScreenNo.CONDITION.value, condition.name, condition.index, query_type)
-        logger.debug(f'tr_check_condition(). put')
-        self.tr_queue.put(job)
+        ret = self.ocx.send_condition(ScreenNo.CONDITION.value, cond.name, cond.index, query_type)
+        logger.debug(f'send_condition(0). ret: {ret}')
 
-    def tr_register_condition_list(self, cond_list: List[Condition]):
+    def register_cond_list(self, cond_list: List[Condition]):
         query_type = 1  # 실시간조회
         for cond in cond_list:
-            job = Job(self.ocx.send_condition, ScreenNo.CONDITION.value, cond.name, cond.index, query_type)
-            logger.debug(f'tr_register_condition_list(). put')
-            self.tr_queue.put(job)
+            ret = self.ocx.send_condition(ScreenNo.CONDITION.value, cond.name, cond.index, query_type)
+            logger.debug(f'send_condition(1). ret: {ret}')
 
     def tr_multi_code_detail(self, the_code_list: List[str]):
         """ 복수 종목에 대한 기본 정보 요청
@@ -167,11 +164,11 @@ if __name__ == "__main__":
     kiwoom_manager.tr_connect()
     event_loop.exec_()
 
-    kiwoom_manager.tr_load_condition_list()
+    kiwoom_manager.load_cond_list()
     event_loop.exec_()
 
     target_condition = data_manager.cond_dic[3]
-    kiwoom_manager.tr_check_condition(target_condition)
+    kiwoom_manager.check_cond(target_condition)
     event_loop.exec_()
 
     input_code_list = ['004540', '005360', '053110']

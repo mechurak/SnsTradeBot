@@ -65,7 +65,7 @@ class Manager(UiListener, ModelListener):
 
     def btn_refresh_condition_list_clicked(self):
         logger.info("btn_refresh_condition_list_clicked")
-        self.kiwoom_manager.tr_load_condition_list()
+        self.kiwoom_manager.load_cond_list()
 
     def combo_signal_type_changed(self, condition, signal_type_index):
         logger.info(f'combo_signal_type_changed. {condition}: {signal_type_index}')
@@ -73,7 +73,7 @@ class Manager(UiListener, ModelListener):
 
     def btn_query_condition_clicked(self, condition):
         logger.info(f'btn_query_condition_clicked. {condition.index}, {condition.name}')
-        self.kiwoom_manager.tr_check_condition(condition)
+        self.kiwoom_manager.check_cond(condition)
 
     def btn_register_condition_list_clicked(self):
         logger.info("btn_register_condition_list_clicked")
@@ -81,7 +81,7 @@ class Manager(UiListener, ModelListener):
         for cond in self.data_manager.cond_dic.values():
             if cond.signal_type is not SignalType.UNDEFINED:
                 cond_list.append(cond)
-        self.kiwoom_manager.tr_register_condition_list(cond_list)
+        self.kiwoom_manager.register_cond_list(cond_list)
 
     # ModelListener
     def on_data_updated(self, data_type: DataType):
