@@ -203,7 +203,7 @@ class KiwoomEventHandler(EventHandler):
         :param cond_index: 조건명 인덱스
         """
         logger.debug(f'code:{code}, type:{event_type}, cond_name:{cond_name}, cond_index:{cond_index}')
-        condition: Condition = self.data_manager.get_condition(int(cond_index))
+        condition: Condition = self.data_manager.get_cond(int(cond_index))
 
         if condition.signal_type == SignalType.SELL and event_type == 'I':  # 매도 조건식 편입
             if code not in self.data_manager.stock_dic:
@@ -219,9 +219,20 @@ class KiwoomEventHandler(EventHandler):
 
     def on_receive_condition_ver(self, ret: int, msg: str):
         logger.debug(f'ret:{ret}, msg:"{msg}"')  # ret: 사용자 조건식 저장 성공여부 (1: 성공, 나머지 실패)
-        condition_name_dic = self.ocx.get_condition_name_list()
-        logger.debug(condition_name_dic)
-        self.data_manager.set_condition_dic(condition_name_dic)
+        condition_name_list_str = self.ocx.get_condition_name_list()
+        if len(condition_name_list_str) == 0:
+            logger.warning(f'len(condition_name_list_str): {len(condition_name_list_str)}')
+            return
+        logger.debug(f'condition_name_list_str: {condition_name_list_str}')
+        if condition_name_list_str[-1] == ';':
+            condition_name_list_str = condition_name_list_str[:-1]  # Remove last ';'
+        condition_name_list = condition_name_list_str.split(';')
+        cond_name_dic = {}
+        for name_with_index in condition_name_list:
+            temp_list = name_with_index.split('^')
+            cond_name_dic[int(temp_list[0])] = temp_list[1]
+        logger.debug(f'cond_name_dic: {cond_name_dic}')
+        self.data_manager.set_cond_dic(cond_name_dic)
 
     def on_receive_tr_condition(self, scr_no: str, code_list_str: str, cond_name, index: int, has_next: int):
         logger.debug(f'scr_no:"{scr_no}", code_list_str:"{code_list_str}", cond_name:"{cond_name}",  index:{index}, '

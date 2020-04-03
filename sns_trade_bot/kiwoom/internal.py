@@ -35,14 +35,13 @@ class KiwoomOcx(QAxWidget):
         return code_list[:-1]
 
     def get_condition_name_list(self):
-        condition_name_list_str = self.dynamicCall("GetConditionNameList()")
-        condition_name_list_str = condition_name_list_str[:-1]  # Remove last ';'
-        condition_name_list = condition_name_list_str.split(';')
-        ret_dic = {}
-        for name_with_index in condition_name_list:
-            temp_list = name_with_index.split('^')
-            ret_dic[int(temp_list[0])] = temp_list[1]
-        return ret_dic
+        """조건검색 조건명 리스트를 받아온다.
+
+        조건명 리스트를 구분(";")하여 받아온다. ex) 인덱스1^조건명1;인덱스2^조건명2;...
+
+        :return: 조건명 리스트(인덱스^조건명)
+        """
+        return self.dynamicCall("GetConditionNameList()")
 
     def get_master_code_name(self, code: str) -> str:
         """종목코드의 한글명을 반환한다.
@@ -50,8 +49,7 @@ class KiwoomOcx(QAxWidget):
         :param code: 종목코드
         :return: 종목한글명
         """
-        name = self.dynamicCall("GetMasterCodeName(QString)", [code])
-        return name
+        return self.dynamicCall("GetMasterCodeName(QString)", [code])
 
     def get_connect_state(self):
         ret = self.dynamicCall("GetConnectState()")

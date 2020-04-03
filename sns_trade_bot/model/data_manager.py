@@ -105,7 +105,7 @@ class DataManager:
     def get_stock(self, the_code) -> Stock:
         if the_code not in self.stock_dic:
             self.stock_dic[the_code] = Stock(self.listener_list, the_code)
-            logger.debug("new code '%s'. create new stock", the_code)
+            logger.debug(f'new code {the_code}. create new Stock')
         return self.stock_dic[the_code]
 
     def remove_stock(self, the_code):
@@ -143,20 +143,23 @@ class DataManager:
         assert the_account in self.account_list, 'unexpected account!!!'
         self.account = the_account
 
-    def set_condition_dic(self, the_condition_dic):
-        self.cond_dic = {}
-        for index, name in the_condition_dic.items():
-            self.cond_dic[index] = Condition(index, name)
+    def set_cond_dic(self, cond_name_dic: Dict[int, str]):
+        remained_cond_index_set = set(self.cond_dic.keys())
+        for index, name in cond_name_dic.items():
+            self.cond_dic[index] = self.get_cond(index)
+            self.cond_dic[index].name = name
+            if index in remained_cond_index_set:
+                remained_cond_index_set.remove(index)
+        for index in remained_cond_index_set:
+            logger.debug(f'Remove remained index {index}:{self.cond_dic[index].name} from cond_dic.')
+            del self.cond_dic[index]
         for listener in self.listener_list:
             listener.on_data_updated(DataType.TABLE_CONDITION)
 
-    def get_condition_name_dic(self):
-        ret_dic = {}
-        for condition in self.cond_dic.values():
-            ret_dic[condition.index] = condition.name
-        return ret_dic
-
-    def get_condition(self, the_index) -> Condition:
+    def get_cond(self, the_index: int) -> Condition:
+        if the_index not in self.cond_dic:
+            self.cond_dic[the_index] = Condition(the_index, 'UNDEFINED')
+            logger.debug(f'new index {the_index}. create new Condition')
         return self.cond_dic[the_index]
 
     def set_temp_stock_list(self, temp_stock_list: list):
