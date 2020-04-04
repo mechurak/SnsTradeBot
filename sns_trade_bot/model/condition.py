@@ -15,3 +15,11 @@ class Condition:
 
     def __str__(self):
         return f'({self.index} {self.name} {self.signal_type.name})'
+
+    def get_dic(self):
+        ret = {
+            "index": self.index,
+            "name": self.name,
+            "signal_type": self.signal_type.name
+        }
+        return ret

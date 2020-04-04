@@ -80,16 +80,21 @@ class DataManager:
         logger.info('save')
         f = open(DataManager.SAVE_FILE_PATH, "w", encoding='utf8')
         stock_list = []
-        for k, v in self.stock_dic.items():
-            stock_list.append(v.get_dic())
-        data = json.dumps(stock_list, ensure_ascii=False, indent=4)
+        for stock in self.stock_dic.values():
+            stock_list.append(stock.get_dic())
+        cond_list = []
+        for cond in self.cond_dic.values():
+            cond_list.append(cond.get_dic())
+        data_dic = {'stock_list': stock_list, 'cond_list': cond_list}
+        data = json.dumps(data_dic, ensure_ascii=False, indent=4)
         f.write(data)
         f.close()
 
     def load(self):
         logger.info('load')
         f = open(DataManager.SAVE_FILE_PATH, "r", encoding='utf8')
-        stock_list = json.load(f)
+        data_dic = json.load(f)
+        stock_list = data_dic['stock_list']
         logger.info(stock_list)
         for loaded_stock in stock_list:
             stock = self.get_stock(loaded_stock['code'])
@@ -99,8 +104,14 @@ class DataManager:
                 stock.add_buy_strategy(k, v)
             for k, v in loaded_stock['sell_strategy_dic'].items():
                 stock.add_sell_strategy(k, v)
+        cond_list = data_dic['cond_list']
+        for loaded_cond in cond_list:
+            cond = self.get_cond(loaded_cond['index'])
+            cond.name = loaded_cond['name']
+            cond.signal_type = SignalType[loaded_cond['signal_type']]
         for listener in self.listener_list:
             listener.on_data_updated(DataType.TABLE_BALANCE)
+            listener.on_data_updated(DataType.TABLE_CONDITION)
 
     def get_stock(self, the_code) -> Stock:
         if the_code not in self.stock_dic:
@@ -191,21 +202,24 @@ if __name__ == "__main__":
     logger.addHandler(stream_handler)
 
     data_manager = DataManager()
-    stock0001 = data_manager.get_stock('0001')
-    stock0001.name = '테스트종목'
-    stock0002 = data_manager.get_stock('0002')
-    stock0002.name = 'temp종목'
-    logger.info(data_manager)
-    stock0001.add_buy_strategy('buy_just_buy', {})
-    stock0001.add_buy_strategy('buy_on_opening', {})
-    logger.info(data_manager)
-    stock0001.add_sell_strategy('sell_on_closing', {})
-    stock0001.add_sell_strategy('sell_stop_loss', {})
-    stock0001.add_sell_strategy('sell_on_condition', {})
-    stock0002.add_sell_strategy('sell_stop_loss', {'threshold': -0.05})
-    data_manager.save()
-    # data_manager.load()
-    # stock0001 = data_manager.get_stock('0001')
-    # stock0001.add_buy_strategy('temp_strategy', {})
-    # stock0001.add_buy_strategy('buy_on_opening', {})
-    logger.info(data_manager)
+    is_save_test = False
+    if is_save_test:
+        stock0001 = data_manager.get_stock('0001')
+        stock0001.name = '테스트종목'
+        stock0002 = data_manager.get_stock('0002')
+        stock0002.name = 'temp종목'
+        logger.info(data_manager)
+        stock0001.add_buy_strategy('buy_just_buy', {})
+        stock0001.add_buy_strategy('buy_on_opening', {})
+        logger.info(data_manager)
+        stock0001.add_sell_strategy('sell_on_closing', {})
+        stock0001.add_sell_strategy('sell_stop_loss', {})
+        stock0001.add_sell_strategy('sell_on_condition', {})
+        stock0002.add_sell_strategy('sell_stop_loss', {'threshold': -3.0})
+
+        cond1 = data_manager.get_cond(1)
+        cond1.signal_type = SignalType.SELL
+        data_manager.save()
+    else:
+        data_manager.load()
+    data_manager.print()
