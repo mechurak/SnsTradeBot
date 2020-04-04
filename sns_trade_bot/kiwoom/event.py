@@ -3,7 +3,7 @@ import logging
 from sns_trade_bot.model.data_manager import DataManager, DataType
 from sns_trade_bot.model.stock import Stock
 from sns_trade_bot.model.condition import Condition, SignalType
-from sns_trade_bot.kiwoom.common import Job, ScreenNo, RqName, EventHandler, TrResultKey, Fid
+from sns_trade_bot.kiwoom.common import Job, ScnNo, RqName, EventHandler, TrResultKey, Fid
 from sns_trade_bot.kiwoom.internal import KiwoomOcx
 
 logger = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ class KiwoomEventHandler(EventHandler):
             f'unused4:"{unused4}"')
 
         if rq_name == RqName.INTEREST_CODE.value:
-            count = self.ocx.get_repeat_cnt(tr_code)
+            count = self.ocx.get_repeat_cnt(tr_code, '관심종목정보')
             for i in range(count):
                 self.print_tr_data(tr_code, record_name, i, TrResultKey.INTEREST_CODE_MULTI)
                 code = self.ocx.get_comm_data(tr_code, record_name, i, '종목코드')
@@ -49,7 +49,7 @@ class KiwoomEventHandler(EventHandler):
                 stock.name = name
                 stock.cur_price = price
                 logger.info(f'{name}({code}) price:"{price}"')
-            self.ocx.disconnect_real_data(ScreenNo.INTEREST)
+            self.ocx.disconnect_real_data(ScnNo.INTEREST.value)
             self.data_manager.set_updated(DataType.TABLE_BALANCE)
         elif rq_name == RqName.BALANCE.value:
             self.print_tr_data(tr_code, record_name, 0, TrResultKey.BALANCE_SINGLE)
@@ -64,7 +64,7 @@ class KiwoomEventHandler(EventHandler):
             cash2 = int(cash2_str)
             buy_total = int(buy_total_str)
             print_count = int(print_count_str)
-            count = self.ocx.get_repeat_cnt(tr_code)
+            count = self.ocx.get_repeat_cnt(tr_code, '종목별계좌평가현황')
             logger.info(f'account_name:"{account_name}", cur_balance:{cur_balance}, cash:{cash}, cash2:{cash2}, '
                         f'buy_total:{buy_total}, print_count:{print_count}, count:{count}')
             for i in range(count):
@@ -192,7 +192,7 @@ class KiwoomEventHandler(EventHandler):
             if qty == 0:
                 logger.info(f'{name}({code}) 청산 완료!!')
                 # TODO: 매수 전략 다른 게 있으면, 계속 실시간 받아야 함.
-                self.ocx.set_real_remove(ScreenNo.REAL.value, code)
+                self.ocx.set_real_remove(ScnNo.REAL.value, code)
 
     def on_receive_real_condition(self, code: str, event_type: str, cond_name: str, cond_index: str):
         """조검검색 실시간 편입, 이탈 종목을 받을 시점을 알려준다.

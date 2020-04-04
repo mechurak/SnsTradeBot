@@ -10,7 +10,7 @@ from typing import List
 from PyQt5.QtWidgets import *
 from sns_trade_bot.model.data_manager import DataManager, DataType, ModelListener
 from sns_trade_bot.model.condition import Condition, SignalType
-from sns_trade_bot.kiwoom.common import Job, RqName, ScreenNo
+from sns_trade_bot.kiwoom.common import Job, RqName, ScnNo
 from sns_trade_bot.kiwoom.internal import KiwoomOcx
 from sns_trade_bot.kiwoom.event import KiwoomEventHandler
 from sns_trade_bot.slack.webhook import MsgSender
@@ -56,19 +56,19 @@ class Kiwoom:
 
     def check_cond(self, cond: Condition):
         query_type = 0  # 일반조회
-        ret = self.ocx.send_condition(ScreenNo.CONDITION.value, cond.name, cond.index, query_type)
+        ret = self.ocx.send_condition(ScnNo.CONDITION.value, cond.name, cond.index, query_type)
         logger.debug(f'send_condition(0). ret: {ret}')
 
     def register_cond_list(self, cond_list: List[Condition]):
         query_type = 1  # 실시간조회
         for cond in cond_list:
-            ret = self.ocx.send_condition(ScreenNo.CONDITION.value, cond.name, cond.index, query_type)
+            ret = self.ocx.send_condition(ScnNo.CONDITION.value, cond.name, cond.index, query_type)
             logger.debug(f'send_condition(1). ret: {ret}')
 
     def tr_multi_code_detail(self, the_code_list: List[str]):
         """ 복수 종목에 대한 기본 정보 요청
         """
-        job = Job(self.ocx.comm_kw_rq_data, the_code_list)
+        job = Job(self._request_multi_code_info, the_code_list)
         logger.debug(f'tr_multi_code_detail(). put')
         self.tr_queue.put(job)
 
@@ -76,15 +76,15 @@ class Kiwoom:
         code_list_str = ';'.join(the_code_list)
         fid_list = "9001;10;13"  # 종목코드,업종코드;현재가;누적거래량
         real_type = "0"  # 0: 최초 등록, 1: 같은 화면에 종목 추가
-        self.ocx.set_real_reg(ScreenNo.REAL.value, code_list_str, fid_list, real_type)
+        self.ocx.set_real_reg(ScnNo.REAL.value, code_list_str, fid_list, real_type)
 
     def tr_account_detail(self):
-        job = Job(self.ocx.request_account_detail)
+        job = Job(self._request_account_detail)
         logger.debug(f'tr_account_detail(). put')
         self.tr_queue.put(job)
 
     def tr_code_info(self, the_code: str):
-        job = Job(self.ocx.request_code_info, the_code)
+        job = Job(self._request_code_info(), the_code)
         logger.debug(f'tr_code_info(). put')
         self.tr_queue.put(job)
 
@@ -94,7 +94,7 @@ class Kiwoom:
         price = 0
         hoga_gb = '03'  # 시장가
         org_order_no = ''
-        job = Job(self.ocx.send_order, RqName.ORDER.value, ScreenNo.ORDER.value, self.data_manager.account, order_type,
+        job = Job(self.ocx.send_order, RqName.ORDER.value, ScnNo.ORDER.value, self.data_manager.account, order_type,
                   the_code, the_qty, price, hoga_gb, org_order_no)
         logger.debug(f'tr_buy_order(). put')
         self.tr_queue.put(job)
@@ -110,7 +110,7 @@ class Kiwoom:
         price = 0
         hoga_gb = '03'  # 시장가
         org_order_no = ''
-        job = Job(self.ocx.send_order, RqName.ORDER.value, ScreenNo.ORDER.value, self.data_manager.account, order_type,
+        job = Job(self.ocx.send_order, RqName.ORDER.value, ScnNo.ORDER.value, self.data_manager.account, order_type,
                   the_code, the_qty, price, hoga_gb, org_order_no)
         logger.debug(f'tr_sell_order(). put')
         self.tr_queue.put(job)
@@ -119,6 +119,37 @@ class Kiwoom:
         send_msg_job = Job(MsgSender.send_msg, msg)
         self.tr_queue.put(send_msg_job)
         logger.debug(f'tr_sell_order(). put send_msg')
+
+    def _request_account_detail(self):
+        logger.info(f'account: {self.data_manager.account}')
+        self.ocx.set_input_value('계좌번호', self.data_manager.account)
+        self.ocx.set_input_value('비밀번호', '')  # 사용안함(공백)
+        self.ocx.set_input_value('상장폐지조회구분', '0')  # 0:전체, 1: 상장폐지종목제외
+        self.ocx.set_input_value('비밀번호입력매체구분', '00')  # 고정값?
+        tr_code = 'OPW00004'  # 계좌평가현황요청
+        is_next = 0  # 연속조회요청 여부 (0:조회 , 2:연속)
+        return self.ocx.comm_rq_data(RqName.BALANCE.value, tr_code, is_next, ScnNo.BALANCE.value)
+
+    def _request_code_info(self, the_code: str):
+        logger.info(f'code: {the_code}')
+        self.ocx.set_input_value('종목코드', the_code)
+        tr_code = 'opt10001'  # 주식기본정보요청
+        is_next = 0
+        return self.ocx.comm_rq_data(RqName.CODE_INFO.value, tr_code, is_next, ScnNo.CODE.value)
+
+    def _request_multi_code_info(self, the_code_list: List[str]):
+        logger.debug(f'the_code_list: {the_code_list}')
+        count = len(the_code_list)
+        if count == 0:
+            logger.error('code_list is empty!!')
+            return -1
+        code_list_str = ";".join(the_code_list)  # 종목리스트
+        is_next = 0  # 연속조회요청 여부
+        code_count = count  # 종목개수
+        type_flag = 0  # 조회구분 (0: 주식관심종목정보 , 선물옵션관심종목정보)
+        rq_name = RqName.INTEREST_CODE.value  # 사용자구분 명
+        scn_no = ScnNo.INTEREST.value  # 화면변호
+        return self.ocx.comm_kw_rq_data(code_list_str, is_next, code_count, type_flag, rq_name, scn_no)
 
 
 if __name__ == "__main__":

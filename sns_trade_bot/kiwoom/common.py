@@ -11,7 +11,7 @@ class Job:
         return self.fn(*self.args, **self.kwargs)
 
 
-class ScreenNo(enum.Enum):
+class ScnNo(enum.Enum):
     CONDITION = '1111'  # 조건식
     REAL = '2222'  # 실시간 조회
     INTEREST = '3333'  # 관심종목 조회
