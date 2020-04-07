@@ -11,6 +11,7 @@ class Stock:
         self.code = the_code  # 종목코드
         self.name = the_name  # 종목명
         self.cur_price = the_cur_price  # 현재가
+        self.top_price = 0  # 보유중 최고가
         self.buy_price: int = 0  # 매입가
         self.qty: int = 0  # 보유수량
         self.earning_rate: float = 0.0  # 수익률 (%)
@@ -21,7 +22,7 @@ class Stock:
         self.remained_sell_qty: int = 0
 
     def __str__(self):
-        return f'({self.code} {self.name} {self.cur_price} {self.buy_price} {self.qty} ' \
+        return f'({self.code} {self.name} {self.cur_price} {self.buy_price} {self.top_price} {self.qty} ' \
                f'{list(self.buy_strategy_dic.keys())} {list(self.sell_strategy_dic.keys())} {self.target_qty})'
 
     def get_dic(self):
