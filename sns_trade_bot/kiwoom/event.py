@@ -112,8 +112,18 @@ class KiwoomEventHandler(EventHandler):
     def on_receive_real_data(self, code: str, real_type: str, real_data: str):
         logger.debug(f'code:"{code}", real_type:"{real_type}", real_data:"{real_data}"')
         if real_type == '장시작시간':
-            # TODO: Trigger time related strategy
-            pass
+            cur_time_str = self.ocx.get_comm_real_data(code, 20)
+            if cur_time_str == "152500":  # 15시 25분.
+                for stock in self.data_manager.stock_dic.values():
+                    if stock.qty > 0 and stock.remained_sell_qty == 0:
+                        for strategy in stock.sell_strategy_dic.values():
+                            if strategy.enabled:
+                                strategy.on_time(cur_time_str)
+                    if stock.remained_buy_qty == 0:
+                        for strategy in stock.buy_strategy_dic.values():
+                            if strategy.enabled:
+                                strategy.on_time(cur_time_str)
+
         elif real_type == '주식체결':
             price_str = self.ocx.get_comm_real_data(code, Fid.현재가.value)
             cur_price = int(price_str)

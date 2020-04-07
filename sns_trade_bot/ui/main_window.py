@@ -107,10 +107,13 @@ class MainWindow(QMainWindow, ModelListener):
         logger.info(f'on_combo_buy_strategy_changed: {strategy}')
         from sns_trade_bot.strategy.buy_just_buy import BuyJustBuy
         from sns_trade_bot.strategy.buy_on_opening import BuyOnOpening
+        from sns_trade_bot.strategy.buy_on_closing import BuyOnClosing
         if strategy == "buy_just_buy":
             default_param = BuyJustBuy.DEFAULT_PARAM
         elif strategy == "buy_on_opening":
             default_param = BuyOnOpening.DEFAULT_PARAM
+        elif strategy == "buy_on_closing":
+            default_param = BuyOnClosing.DEFAULT_PARAM
         else:
             return
         self.ui.txt_buy_param.setText(str(default_param))

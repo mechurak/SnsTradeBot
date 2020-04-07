@@ -42,10 +42,13 @@ class Stock:
     def add_buy_strategy(self, the_strategy_name, the_param_dic):
         from sns_trade_bot.strategy.buy_just_buy import BuyJustBuy
         from sns_trade_bot.strategy.buy_on_opening import BuyOnOpening
+        from sns_trade_bot.strategy.buy_on_closing import BuyOnClosing
         if the_strategy_name == 'buy_just_buy':
             self.buy_strategy_dic[the_strategy_name] = BuyJustBuy(self, the_param_dic)
         elif the_strategy_name == 'buy_on_opening':
             self.buy_strategy_dic[the_strategy_name] = BuyOnOpening(self, the_param_dic)
+        elif the_strategy_name == 'buy_on_closing':
+            self.buy_strategy_dic[the_strategy_name] = BuyOnClosing(self, the_param_dic)
         else:
             logger.error(f'unknown buy strategy "{the_strategy_name}" for "{self.name}"')
 

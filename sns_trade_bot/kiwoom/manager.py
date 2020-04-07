@@ -84,7 +84,7 @@ class Kiwoom:
         self.tr_queue.put(job)
 
     def tr_code_info(self, the_code: str):
-        job = Job(self._request_code_info(), the_code)
+        job = Job(self._request_code_info, the_code)
         logger.debug(f'tr_code_info(). put')
         self.tr_queue.put(job)
 

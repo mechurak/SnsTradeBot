@@ -23,7 +23,10 @@ class SellStopLoss(StrategyBase):
         logger.info(f'{self.NAME} strategy created for {self.stock.name}')
 
     def get_param_dic(self):
-        return {'threshold': self.threshold}
+        return {
+            'threshold': self.threshold,
+            'from_top': self.from_top
+        }
 
     def on_price_updated(self):
         if self.stock.remained_sell_qty:

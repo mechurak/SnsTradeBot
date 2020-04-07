@@ -75,6 +75,11 @@ class Fid(enum.IntEnum):
     상한가 = 305
     하한가 = 306
 
+    # 장시작시간
+    장운영구분 = 215
+    체결시간 = 20
+    장시작예상잔여시간 = 214
+
 
 class EventHandler:
     def on_event_connect(self, err_code):

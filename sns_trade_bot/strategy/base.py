@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 class StrategyBase:
     NAME = 'strategy_base'
     DEFAULT_PARAM = {}
-    BUY_STRATEGY_LIST = ['buy_just_buy', 'buy_on_opening']
+    BUY_STRATEGY_LIST = ['buy_just_buy', 'buy_on_opening', 'buy_on_closing']
     SELL_STRATEGY_LIST = ['sell_on_closing', 'sell_on_condition', 'sell_stop_loss', 'sell_just_sell']
 
     enabled = True
