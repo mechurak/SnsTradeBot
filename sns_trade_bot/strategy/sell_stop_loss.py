@@ -40,7 +40,7 @@ class SellStopLoss(StrategyBase):
         if self.stock.cur_price > self.stock.top_price:
             self.stock.top_price = self.stock.cur_price
 
-        cur_from_top = (self.stock.top_price - self.stock.cur_price) / self.stock.cur_price * 100
+        cur_from_top = (self.stock.cur_price - self.stock.top_price) / self.stock.top_price * 100
 
         if self.stock.earning_rate < self.threshold:
             logger.info(f'StopLoss!!!! name:{self.stock.name}, qty:{self.stock.qty}. '

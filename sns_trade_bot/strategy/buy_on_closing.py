@@ -24,16 +24,17 @@ class BuyOnClosing(StrategyBase):
         if cur_time_str != self.TARGET_TIME:
             return
 
-        logger.info(f'BuyOnClosing. time:{cur_time_str}. {self.stock.name}')
+        logger.info(f'BuyOnClosing. time:"{cur_time_str}". {self.stock.name}({self.stock.code}), '
+                    f' cur_price:{self.stock.cur_price}, qty:{self.stock.qty}')
         if self.stock.remained_buy_qty:
             logger.info(f'remained_buy_qty:{self.stock.remained_buy_qty}. do nothing')
             return
 
         order_qty = (self.budget * 1000) // self.stock.cur_price
-        logger.info(f'budget:{self.budget}, order_qty:{self.stock.order_qty}')
+        logger.info(f'budget:{self.budget}, order_qty:{order_qty}')
 
         if order_qty <= 0:
-            logger.info(f'order_qty:{order_qty}, qty:{self.stock.qty}. do nothing')
+            logger.info(f'qty:{self.stock.qty}. do nothing')
             return
 
         logger.info(f'BuyOnClosing!!!! order_qty:{order_qty}')

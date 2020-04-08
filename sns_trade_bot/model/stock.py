@@ -69,13 +69,13 @@ class Stock:
             logger.error(f'unknown sell strategy "{the_strategy_name}" for "{self.name}"')
 
     def on_buy_signal(self, the_strategy_name: str, the_order_qty: int):
-        logger.info(f'buy_signal!! {self.name}. strategy:{the_strategy_name}, qty:{the_order_qty}')
+        logger.info(f'buy_signal!! {self.name}({self.code}). strategy:"{the_strategy_name}", qty:{the_order_qty}')
         for listener in self.listener_list:
             listener.on_buy_signal(self.code, the_order_qty)
         self.remained_buy_qty = the_order_qty
 
     def on_sell_signal(self, the_strategy_name: str, the_order_qty: int):
-        logger.info(f'sell_signal!! {self.name}. strategy:{the_strategy_name}, qty:{the_order_qty}')
+        logger.info(f'sell_signal!! {self.name}({self.code}). strategy:"{the_strategy_name}", qty:{the_order_qty}')
         for listener in self.listener_list:
             listener.on_sell_signal(self.code, the_order_qty)
         self.remained_sell_qty = the_order_qty

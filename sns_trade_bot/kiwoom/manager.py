@@ -62,7 +62,7 @@ class Kiwoom:
     def register_cond_list(self, cond_list: List[Condition]):
         query_type = 1  # 실시간조회
         for cond in cond_list:
-            ret = self.ocx.send_condition(ScnNo.CONDITION.value, cond.name, cond.index, query_type)
+            ret = self.ocx.send_condition(ScnNo.COND_REAL.value, cond.name, cond.index, query_type)
             logger.debug(f'send_condition(1). ret: {ret}')
 
     def tr_multi_code_detail(self, the_code_list: List[str]):

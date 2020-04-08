@@ -12,11 +12,12 @@ class SellOnClosing(StrategyBase):
         super().__init__(the_stock, the_param_dic)
         logger.info(f'{self.NAME} strategy created for {self.stock.name}')
 
-    def on_time(self, cur_time_str):
+    def on_time(self, cur_time_str: str):
         if cur_time_str != self.TARGET_TIME:
             return
 
-        logger.info(f'SellOnClosing. time:{cur_time_str}. {self.stock.name}')
+        logger.info(f'SellOnClosing. time:"{cur_time_str}". {self.stock.name}({self.stock.code}), '
+                    f' cur_price:{self.stock.cur_price}, qty:{self.stock.qty}')
         if self.stock.remained_sell_qty:
             logger.info(f'remained_buy_qty:{self.stock.remained_sell_qty}. do nothing')
             return

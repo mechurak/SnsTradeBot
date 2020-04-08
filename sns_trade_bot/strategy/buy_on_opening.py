@@ -20,27 +20,18 @@ class BuyOnOpening(StrategyBase):
     def get_param_dic(self):
         return {'budget': self.budget}
 
-    def on_tr_data(self, current_price):
-        # TODO: 동시호가때 너무 올랐을 경우 대비 필요함 (현재가에 몇 프로 더해서 계산?)
-        self.stock.target_qty = (self.budget * 1000) // self.stock.cur_price
-        logger.info(f'budget:{self.budget}, target_qty:{self.stock.target_qty}')
-
     def on_time(self, cur_time_str):
         if cur_time_str != self.TARGET_TIME:
             return
 
-        logger.info(f'BuyOnOpening. time:{cur_time_str}. {self.stock.name}')
-        if self.stock.remained_buy_qty:
-            logger.info(f'remained_buy_qty:{self.stock.remained_buy_qty}. do nothing')
-            return
+        logger.info(f'BuyOnOpening. time:"{cur_time_str}". {self.stock.name}({self.stock.code}), '
+                    f' cur_price:{self.stock.cur_price}, qty:{self.stock.qty}')
 
-        if not self.stock.target_qty:
-            return
+        order_qty = (self.budget * 1000) // self.stock.cur_price
+        logger.info(f'budget:{self.budget}, order_qty:{order_qty}')
 
-        order_qty = self.stock.target_qty - self.stock.qty
-
-        if self.stock.target_qty == 0 or order_qty <= 0:
-            logger.info(f'target_qty:{self.stock.target_qty}, qty:{self.stock.qty}. do nothing')
+        if order_qty <= 0:
+            logger.info(f'qty:{self.stock.qty}. do nothing')
             return
 
         logger.info(f'BuyOnOpening!!!! order_qty:{order_qty}')
