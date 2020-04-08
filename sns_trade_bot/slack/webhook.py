@@ -24,6 +24,8 @@ class MsgSender:
         }
 
         for stock in stock_list:
+            if stock.qty == 0:
+                continue
             block = {
                 "type": "section",
                 "fields": [

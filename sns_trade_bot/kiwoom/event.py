@@ -1,5 +1,7 @@
 import logging
 
+from PyQt5.QtCore import QTimer
+
 from sns_trade_bot.model.data_manager import DataManager, DataType
 from sns_trade_bot.model.stock import Stock
 from sns_trade_bot.model.condition import Condition, SignalType
@@ -121,6 +123,25 @@ class KiwoomEventHandler(EventHandler):
                             if strategy.enabled:
                                 strategy.on_time(cur_time_str)
 
+            elif cur_time_str == '085900':
+                for stock in self.data_manager.stock_dic.values():
+                    if stock.remained_buy_qty == 0:
+                        for strategy in stock.buy_strategy_dic.values():
+                            if strategy.enabled:
+                                strategy.on_time(cur_time_str)
+
+            elif cur_time_str == '084000':
+                logger.info("장시작시간 20분전. 1초 후 계좌정보 확인")
+                QTimer().singleShot(1000, self._request_account_detail)  # ms 후에 함수 실행
+                logger.info("장시작시간 20분전. 10초 후 slack 메시지 발송")
+                QTimer().singleShot(10000, self._send_account_to_slack)
+
+            elif cur_time_str == '152900':
+                logger.info("장마감시간 1분전. 180초 후 계좌정보 확인")
+                QTimer().singleShot(180000, self._request_account_detail)
+                logger.info("장마감시간 1분전. 200초 후 slack 메시지 발송")
+                QTimer().singleShot(200000, self._send_account_to_slack)
+
         elif real_type == '주식체결':
             price_str = self.ocx.get_comm_real_data(code, Fid.현재가.value)
             cur_price = int(price_str)
@@ -139,6 +160,7 @@ class KiwoomEventHandler(EventHandler):
                     if strategy.enabled:
                         strategy.on_price_updated()
 
+            # 장마감 동시호가 시간 되기 전 (3시 15분경)
             cur_time_str = self.ocx.get_comm_real_data(code, Fid.체결시간.value)
             cur_time = int(cur_time_str)
             if self.is_closing_called is False and 151500 < cur_time < 151505:
@@ -147,6 +169,7 @@ class KiwoomEventHandler(EventHandler):
                         for strategy in stock.sell_strategy_dic.values():
                             if strategy.enabled:
                                 strategy.on_time(cur_time_str)
+                self.is_closing_called = True
 
         elif real_type == '주식예상체결':
             price_str = self.ocx.get_comm_real_data(code, Fid.현재가.value)
@@ -283,3 +306,18 @@ class KiwoomEventHandler(EventHandler):
         for item in item_list:
             out_str = self.ocx.get_comm_data(tr_code, record_name, index, item)
             logger.debug(f'  "{item}" : "{out_str}"')
+
+    # TODO: Reduce duplicated function
+    def _request_account_detail(self):
+        logger.info(f'account: {self.data_manager.account}')
+        self.ocx.set_input_value('계좌번호', self.data_manager.account)
+        self.ocx.set_input_value('비밀번호', '')  # 사용안함(공백)
+        self.ocx.set_input_value('상장폐지조회구분', '0')  # 0:전체, 1: 상장폐지종목제외
+        self.ocx.set_input_value('비밀번호입력매체구분', '00')  # 고정값?
+        tr_code = 'OPW00004'  # 계좌평가현황요청
+        is_next = 0  # 연속조회요청 여부 (0:조회 , 2:연속)
+        return self.ocx.comm_rq_data(RqName.BALANCE.value, tr_code, is_next, ScnNo.BALANCE.value)
+
+    def _send_account_to_slack(self):
+        from sns_trade_bot.slack.webhook import MsgSender
+        MsgSender.send_balance(list(self.data_manager.stock_dic.values()))
