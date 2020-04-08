@@ -184,6 +184,7 @@ class KiwoomEventHandler(EventHandler):
             status = self.ocx.get_chejan_data(Fid.주문상태.value)  # '접수' or '체결'
             order_type = self.ocx.get_chejan_data(Fid.매도수구분.value)  # '1':매도, '2':매수
             time_str = self.ocx.get_chejan_data(Fid.주문_체결시간.value)  # 주문/체결시간 (HHMMSSMS)
+            time = int(time_str)
             if status == '접수':
                 logger.info(
                     f'{name}({code}) 주문접수. order_id:"{order_id}", order_type:"{order_type}", time_str:"{time_str}"')
@@ -201,7 +202,7 @@ class KiwoomEventHandler(EventHandler):
                     stock.remained_buy_qty = remained_qty
                     # TODO: 종목 실시간 등록 및 조건식 실시간 재적용(?)
 
-                if remained_qty == 0:
+                if remained_qty == 0 and 90100 < time < 151400:
                     from sns_trade_bot.slack.webhook import MsgSender
                     send_balance_job = Job(MsgSender.send_balance, list(self.data_manager.stock_dic.values()))
                     self.tr_queue.put(send_balance_job)
