@@ -1,8 +1,9 @@
 import logging
+from typing import List
 
 from PyQt5.QtCore import QTimer
 
-from sns_trade_bot.model.data_manager import DataManager, DataType
+from sns_trade_bot.model.data_manager import DataManager, DataType, HoldType
 from sns_trade_bot.model.stock import Stock
 from sns_trade_bot.model.condition import Condition, SignalType
 from sns_trade_bot.kiwoom.common import Job, ScnNo, RqName, EventHandler, TrResultKey, Fid
@@ -15,10 +16,11 @@ class KiwoomEventHandler(EventHandler):
     data_manager: DataManager
     ocx: KiwoomOcx
 
-    def __init__(self, the_data_manager, the_ocx, the_tr_queue):
+    def __init__(self, the_data_manager, the_ocx, the_tr_queue, the_on_connect):
         self.data_manager = the_data_manager
         self.ocx = the_ocx
         self.tr_queue = the_tr_queue
+        self.on_connect_callback = the_on_connect
         self.is_closing_called: bool = False
 
     def on_event_connect(self, err_code):
@@ -29,6 +31,9 @@ class KiwoomEventHandler(EventHandler):
             account_list = account_num.split(";")
             logger.info("account_list: %s", account_list)
             self.data_manager.set_account_list(account_list)
+
+            # Let manager know
+            self.on_connect_callback()
         else:
             logger.info("disconnected")
 
@@ -136,11 +141,18 @@ class KiwoomEventHandler(EventHandler):
                 logger.info("장시작시간 20분전. 10초 후 slack 메시지 발송")
                 QTimer().singleShot(10000, self._send_account_to_slack)
 
+            elif cur_time_str == '085000':
+                logger.info("장시작시간 10분전. set_real_reg")
+                target_code_list = self.data_manager.get_code_list(HoldType.TARGET)
+                self._set_real_reg(target_code_list)
+
             elif cur_time_str == '152900':
                 logger.info("장마감시간 1분전. 180초 후 계좌정보 확인")
                 QTimer().singleShot(180000, self._request_account_detail)
                 logger.info("장마감시간 1분전. 200초 후 slack 메시지 발송")
                 QTimer().singleShot(200000, self._send_account_to_slack)
+                logger.info("장마감시간 1분전. 230초 후 프로그램 종료")
+                QTimer().singleShot(230000, self._exit)
 
         elif real_type == '주식체결':
             price_str = self.ocx.get_comm_real_data(code, Fid.현재가.value)
@@ -314,3 +326,13 @@ class KiwoomEventHandler(EventHandler):
     def _send_account_to_slack(self):
         from sns_trade_bot.slack.webhook import MsgSender
         MsgSender.send_balance(list(self.data_manager.stock_dic.values()))
+
+    def _exit(self):
+        logger.info('exit SnsTradeBot')
+        exit(0)
+
+    def _set_real_reg(self, the_code_list: List[str]):
+        code_list_str = ';'.join(the_code_list)
+        fid_list = "9001;10;13"  # 종목코드,업종코드;현재가;누적거래량
+        real_type = "0"  # 0: 최초 등록, 1: 같은 화면에 종목 추가
+        self.ocx.set_real_reg(ScnNo.REAL.value, code_list_str, fid_list, real_type)

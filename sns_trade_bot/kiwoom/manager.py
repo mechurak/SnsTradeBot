@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import List
 
 from PyQt5.QtWidgets import *
-from sns_trade_bot.model.data_manager import DataManager, DataType, ModelListener
+from sns_trade_bot.model.data_manager import DataManager, DataType, ModelListener, HoldType
 from sns_trade_bot.model.condition import Condition, SignalType
 from sns_trade_bot.kiwoom.common import Job, RqName, ScnNo
 from sns_trade_bot.kiwoom.internal import KiwoomOcx
@@ -28,7 +28,7 @@ class Kiwoom:
         self.data_manager = the_data_manager
         self.ocx = KiwoomOcx(self.data_manager)
         self.tr_queue = queue.Queue()
-        self.handler = KiwoomEventHandler(self.data_manager, self.ocx, self.tr_queue)
+        self.handler = KiwoomEventHandler(self.data_manager, self.ocx, self.tr_queue, self.on_connect)
         self.ocx.set_event_handler(self.handler)
 
         worker_thread = threading.Thread(target=self.worker_run)
@@ -150,6 +150,13 @@ class Kiwoom:
         rq_name = RqName.INTEREST_CODE.value  # 사용자구분 명
         scn_no = ScnNo.INTEREST.value  # 화면변호
         return self.ocx.comm_kw_rq_data(code_list_str, is_next, code_count, type_flag, rq_name, scn_no)
+
+    def on_connect(self):
+        logger.info('on_connect!!')
+        self.data_manager.load()
+        self.tr_account_detail()
+        interest_code_list = self.data_manager.get_code_list(HoldType.INTEREST)
+        self.tr_multi_code_detail(interest_code_list)
 
 
 if __name__ == "__main__":
