@@ -164,21 +164,14 @@ class KiwoomEventHandler(EventHandler):
             cur_time_str = self.ocx.get_comm_real_data(code, Fid.체결시간.value)
             cur_time = int(cur_time_str)
             if self.is_closing_called is False and 151500 < cur_time < 151505:
+                logger.info(f'is_closing_called:{self.is_closing_called}. cur_time:{cur_time}')
                 for stock in self.data_manager.stock_dic.values():
                     if stock.qty > 0 and stock.remained_sell_qty == 0:
                         for strategy in stock.sell_strategy_dic.values():
                             if strategy.enabled:
                                 strategy.on_time(cur_time_str)
                 self.is_closing_called = True
-
-        elif real_type == '주식예상체결':
-            price_str = self.ocx.get_comm_real_data(code, Fid.현재가.value)
-            cur_price = int(price_str)
-            cur_price = cur_price if cur_price >= 0 else cur_price * (-1)
-
-            stock = self.data_manager.get_stock(code)
-            stock.cur_price = cur_price
-            stock.update_earning_rate()
+                logger.info(f'is_closing_called:{self.is_closing_called}. cur_time:{cur_time}')
 
     def on_receive_msg(self, scr_no: str, rq_name: str, tr_code: str, msg: str):
         logger.info(f'scr_no:"{scr_no}", rq_name:"{rq_name}", tr_code:"{tr_code}", msg:"{msg}"')
