@@ -53,7 +53,7 @@ class SellStopLoss(StrategyBase):
         else:  # 익절
             if cur_from_top < self.from_top:
                 logger.info(f'FromTop!!!! name:{self.stock.name}, qty:{self.stock.qty}. '
-                            f'cur:{self.stock.cur_price}, buy:{self.stock.buy_price}, top:{self.stock.top_price}'
+                            f'cur:{self.stock.cur_price}, buy:{self.stock.buy_price}, top:{self.stock.top_price}, '
                             f'cur_from_top:{cur_from_top:0.2f} < from_top:{self.from_top}')
                 self.stock.on_sell_signal(self.NAME, self.stock.qty)
 

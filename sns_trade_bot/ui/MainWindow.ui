@@ -261,17 +261,31 @@
        <x>670</x>
        <y>20</y>
        <width>377</width>
-       <height>151</height>
+       <height>173</height>
       </rect>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
-      <item row="1" column="0">
-       <widget class="QComboBox" name="combo_buy"/>
+      <item row="6" column="0">
+       <widget class="QPushButton" name="btn_stock_remove">
+        <property name="text">
+         <string>선택종목 삭제</string>
+        </property>
+       </widget>
       </item>
       <item row="0" column="1">
        <widget class="QLabel" name="label_3">
         <property name="text">
          <string>매도전략</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>매수전략</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
@@ -288,15 +302,8 @@
       <item row="1" column="1">
        <widget class="QComboBox" name="combo_sell"/>
       </item>
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_5">
-        <property name="text">
-         <string>매수전략</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-       </widget>
+      <item row="1" column="0">
+       <widget class="QComboBox" name="combo_buy"/>
       </item>
       <item row="3" column="1">
        <widget class="QPushButton" name="btn_sell_strategy_add">
@@ -305,17 +312,17 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="0">
-       <widget class="QPushButton" name="btn_buy_strategy_add">
-        <property name="text">
-         <string>선택종목에 매수전략 추가</string>
-        </property>
-       </widget>
-      </item>
       <item row="4" column="1">
        <widget class="QPushButton" name="btn_sell_strategy_clear">
         <property name="text">
          <string>선택종목 매도전략 clear</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QPushButton" name="btn_buy_strategy_add">
+        <property name="text">
+         <string>선택종목에 매수전략 추가</string>
         </property>
        </widget>
       </item>
@@ -364,6 +371,13 @@
          <widget class="QLineEdit" name="txt_sell_param"/>
         </item>
        </layout>
+      </item>
+      <item row="5" column="0">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
@@ -470,7 +484,7 @@
      <x>0</x>
      <y>0</y>
      <width>1085</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

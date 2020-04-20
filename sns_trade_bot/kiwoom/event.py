@@ -1,7 +1,9 @@
 import logging
+import sys
 from typing import List
 
 from PyQt5.QtCore import QTimer
+from PyQt5.QtWidgets import QApplication
 
 from sns_trade_bot.model.data_manager import DataManager, DataType, HoldType
 from sns_trade_bot.model.stock import Stock
@@ -329,10 +331,15 @@ class KiwoomEventHandler(EventHandler):
 
     def _exit(self):
         logger.info('exit SnsTradeBot')
-        exit(0)
+        # TODO: Pass app?
+        app.quit()
 
     def _set_real_reg(self, the_code_list: List[str]):
         code_list_str = ';'.join(the_code_list)
         fid_list = "9001;10;13"  # 종목코드,업종코드;현재가;누적거래량
         real_type = "0"  # 0: 최초 등록, 1: 같은 화면에 종목 추가
         self.ocx.set_real_reg(ScnNo.REAL.value, code_list_str, fid_list, real_type)
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)

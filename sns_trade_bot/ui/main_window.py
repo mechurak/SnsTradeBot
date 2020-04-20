@@ -65,6 +65,7 @@ class MainWindow(QMainWindow, ModelListener):
     btn_interest_balance: QPushButton
     btn_real: QPushButton
     btn_code_add: QPushButton
+    btn_stock_remove: QPushButton
 
     btn_refresh_condition: QPushButton
     table_condition = None
@@ -82,6 +83,8 @@ class MainWindow(QMainWindow, ModelListener):
         self.btn_load.clicked.connect(self.data_manager.load)
         self.btn_save.clicked.connect(self.data_manager.save)
         self.btn_print.clicked.connect(self.data_manager.print)
+        self.btn_code_add.clicked.connect(self._on_btn_code_add_clicked)
+        self.btn_stock_remove.clicked.connect(self._on_btn_stock_remove_clicked)
         self.btn_temp_code_add.clicked.connect(self.data_manager.add_all_temp_stock)
         self.combo_buy.addItems(StrategyBase.BUY_STRATEGY_LIST)
         self.combo_sell.addItems(StrategyBase.SELL_STRATEGY_LIST)
@@ -93,7 +96,6 @@ class MainWindow(QMainWindow, ModelListener):
         self.btn_balance.clicked.connect(self.listener.btn_balance_clicked)
         self.btn_interest_balance.clicked.connect(self.listener.btn_interest_balance_clicked)
         self.btn_real.clicked.connect(self.listener.btn_real_clicked)
-        self.btn_code_add.clicked.connect(self._on_btn_code_add_clicked)
         self.btn_refresh_condition.clicked.connect(self.listener.btn_refresh_condition_list_clicked)
         self.btn_register_condition.clicked.connect(self.listener.btn_register_condition_list_clicked)
 
@@ -101,6 +103,15 @@ class MainWindow(QMainWindow, ModelListener):
         code = self.edit_code.text()
         self.listener.btn_code_add_clicked(code)
         self.edit_code.setText('')
+
+    def _on_btn_stock_remove_clicked(self):
+        items = self.table_balance.selectedItems()
+        for item in items:
+            if item.column() == 0:  # 종목코드
+                code = item.text()
+                self.data_manager.remove_stock(code)
+                logger.info(f'remove {code}')
+        self.data_manager.set_updated(DataType.TABLE_BALANCE)
 
     @pyqtSlot(str)
     def on_combo_buy_strategy_changed(self, strategy):
