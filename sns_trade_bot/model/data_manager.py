@@ -92,7 +92,11 @@ class DataManager:
 
     def load(self):
         logger.info('load')
-        f = open(DataManager.SAVE_FILE_PATH, "r", encoding='utf8')
+        try:
+            f = open(DataManager.SAVE_FILE_PATH, "r", encoding='utf8')
+        except FileNotFoundError:
+            logger.error('FileNotFoundError!!!')
+            return
         data_dic = json.load(f)
         stock_list = data_dic['stock_list']
         logger.info(stock_list)

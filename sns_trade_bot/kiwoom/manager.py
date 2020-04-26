@@ -99,7 +99,7 @@ class Kiwoom:
         logger.debug(f'tr_buy_order(). put')
         self.tr_queue.put(job)
 
-        msg = f'매수주문!! `{self.ocx.get_master_code_name(the_code)}`({the_code}) {the_qty}주'
+        msg = f'Buy `{self.ocx.get_master_code_name(the_code)}`({the_code}) {the_qty}주'
         send_msg_job = Job(MsgSender.send_msg, msg)
         self.tr_queue.put(send_msg_job)
         logger.debug(f'tr_buy_order(). put send_msg')
@@ -115,7 +115,9 @@ class Kiwoom:
         logger.debug(f'tr_sell_order(). put')
         self.tr_queue.put(job)
 
-        msg = f'매도주문!! `{self.ocx.get_master_code_name(the_code)}`({the_code}) {the_qty}주'
+        stock = self.data_manager.get_stock(the_code)
+        msg = f'Sell `{self.ocx.get_master_code_name(the_code)}`({the_code}) {the_qty}주. buy:{stock.buy_price},' \
+              f' cur:{stock.cur_price} ({stock.earning_rate}%)'
         send_msg_job = Job(MsgSender.send_msg, msg)
         self.tr_queue.put(send_msg_job)
         logger.debug(f'tr_sell_order(). put send_msg')
