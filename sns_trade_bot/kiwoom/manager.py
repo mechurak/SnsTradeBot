@@ -10,7 +10,7 @@ from typing import List
 from PyQt5.QtWidgets import *
 from sns_trade_bot.model.data_manager import DataManager, DataType, ModelListener, HoldType
 from sns_trade_bot.model.condition import Condition, SignalType
-from sns_trade_bot.kiwoom.common import Job, RqName, ScnNo
+from sns_trade_bot.kiwoom.common import Job, RqName, ScnNo, TrCode
 from sns_trade_bot.kiwoom.internal import KiwoomOcx
 from sns_trade_bot.kiwoom.event import KiwoomEventHandler
 from sns_trade_bot.slack.webhook import MsgSender
@@ -88,6 +88,20 @@ class Kiwoom:
         logger.debug(f'tr_code_info(). put')
         self.tr_queue.put(job)
 
+    def tr_today_earning(self):
+        job = Job(self._request_today_earning)
+        logger.debug(f'tr_code_info(). put')
+        self.tr_queue.put(job)
+
+    def _request_today_earning(self):
+        logger.info(f'account: {self.data_manager.account}')
+        self.ocx.set_input_value('계좌번호', self.data_manager.account)
+        self.ocx.set_input_value('비밀번호', '')  # 사용안함(공백)
+        self.ocx.set_input_value('종목코드', '')  # 전문 조회할 종목코드
+        is_next = 0  # 연속조회요청 여부 (0:조회 , 2:연속)
+        return self.ocx.comm_rq_data(RqName.당일손익상세요청.value, TrCode.당일손익상세요청.value, is_next,
+                                     ScnNo.당일손익상세요청.value)
+
     def tr_buy_order(self, the_code: str, the_qty: int):
         logger.debug(f'tr_buy_order(). the_code:{the_code}, the_qty:{the_qty}')
         order_type = 1  # 신규매수
@@ -117,7 +131,7 @@ class Kiwoom:
 
         stock = self.data_manager.get_stock(the_code)
         msg = f'Sell `{self.ocx.get_master_code_name(the_code)}`({the_code}) {the_qty}주. buy:{stock.buy_price},' \
-              f' cur:{stock.cur_price} ({stock.earning_rate}%)'
+              f' cur:{stock.cur_price} ({stock.earning_rate:.1f}%)'
         send_msg_job = Job(MsgSender.send_msg, msg)
         self.tr_queue.put(send_msg_job)
         logger.debug(f'tr_sell_order(). put send_msg')

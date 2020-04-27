@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1085</width>
-    <height>848</height>
+    <height>793</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,7 +20,7 @@
       <x>10</x>
       <y>500</y>
       <width>1061</width>
-      <height>291</height>
+      <height>251</height>
      </rect>
     </property>
     <property name="title">
@@ -45,7 +45,7 @@
        <x>10</x>
        <y>20</y>
        <width>651</width>
-       <height>261</height>
+       <height>221</height>
       </rect>
      </property>
      <property name="rowCount">
@@ -130,7 +130,7 @@
      <property name="geometry">
       <rect>
        <x>700</x>
-       <y>230</y>
+       <y>190</y>
        <width>331</width>
        <height>41</height>
       </rect>
@@ -261,7 +261,7 @@
        <x>670</x>
        <y>20</y>
        <width>377</width>
-       <height>173</height>
+       <height>175</height>
       </rect>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
@@ -387,7 +387,7 @@
      <rect>
       <x>430</x>
       <y>10</y>
-      <width>351</width>
+      <width>371</width>
       <height>61</height>
      </rect>
     </property>
@@ -399,7 +399,7 @@
       <rect>
        <x>40</x>
        <y>20</y>
-       <width>295</width>
+       <width>320</width>
        <height>30</height>
       </rect>
      </property>
@@ -422,6 +422,13 @@
        <widget class="QPushButton" name="btn_print">
         <property name="text">
          <string>Print</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btn_test">
+        <property name="text">
+         <string>Test</string>
         </property>
        </widget>
       </item>

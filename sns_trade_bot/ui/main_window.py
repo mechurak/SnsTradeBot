@@ -54,6 +54,10 @@ class UiListener:
     def btn_register_condition_list_clicked(self):
         pass
 
+    @abstractmethod
+    def btn_test_clicked(self):
+        pass
+
 
 class MainWindow(QMainWindow, ModelListener):
     data_manager: DataManager
@@ -73,6 +77,7 @@ class MainWindow(QMainWindow, ModelListener):
     btn_load: QPushButton
     btn_save: QPushButton
     btn_print: QPushButton
+    btn_test: QPushButton
 
     def __init__(self, the_data_manager):
         super().__init__()
@@ -98,6 +103,7 @@ class MainWindow(QMainWindow, ModelListener):
         self.btn_real.clicked.connect(self.listener.btn_real_clicked)
         self.btn_refresh_condition.clicked.connect(self.listener.btn_refresh_condition_list_clicked)
         self.btn_register_condition.clicked.connect(self.listener.btn_register_condition_list_clicked)
+        self.btn_test.clicked.connect(self.listener.btn_test_clicked)
 
     def _on_btn_code_add_clicked(self):
         code = self.edit_code.text()
@@ -332,6 +338,9 @@ if __name__ == "__main__":
 
         def btn_register_condition_list_clicked(self):
             logger.info("btn_register_condition_list_clicked")
+
+        def btn_test_clicked(self):
+            logger.info("btn_test_clicked")
 
 
     app = QApplication(sys.argv)

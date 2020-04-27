@@ -19,6 +19,7 @@ class ScnNo(enum.Enum):
     BALANCE = '4444'  # 계좌평가현황요청
     CODE = '5555'  # 주식기본정보요청
     ORDER = '6666'  # SendOrder()
+    당일손익상세요청 = '7777'
 
 
 class RqName(enum.Enum):
@@ -26,6 +27,11 @@ class RqName(enum.Enum):
     BALANCE = 'RQ_BALANCE'  # 계좌평가현황요청 (OPW00004)
     CODE_INFO = 'RQ_CODE_INFO'  # 주식기본정보요청 (opt10001)
     ORDER = 'RQ_ORDER'  # SendOrder()
+    당일손익상세요청 = 'RQ_TODAY'
+
+
+class TrCode(enum.Enum):
+    당일손익상세요청 = 'opt10077'
 
 
 class Fid(enum.IntEnum):
@@ -256,4 +262,18 @@ class TrResultKey:
         '쎄타',
         '베가',
         '로'
+    ]
+    TODAY_SINGLE = [
+        '당일실현손익'
+    ]
+    TODAY_MULTI = [
+        '종목명',
+        '체결량',
+        '매입단가',
+        '체결가',
+        '당일매도손익',
+        '손익율',
+        '당일매매수수료',
+        '당일매매세금',
+        '종목코드'
     ]

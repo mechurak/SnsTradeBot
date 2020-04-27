@@ -83,6 +83,10 @@ class Manager(UiListener, ModelListener):
                 cond_list.append(cond)
         self.kiwoom_manager.register_cond_list(cond_list)
 
+    def btn_test_clicked(self):
+        logger.info("btn_test_clicked")
+        self.kiwoom_manager.tr_today_earning()
+
     # ModelListener
     def on_data_updated(self, data_type: DataType):
         pass

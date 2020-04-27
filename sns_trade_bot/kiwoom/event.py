@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QApplication
 from sns_trade_bot.model.data_manager import DataManager, DataType, HoldType
 from sns_trade_bot.model.stock import Stock
 from sns_trade_bot.model.condition import Condition, SignalType
-from sns_trade_bot.kiwoom.common import Job, ScnNo, RqName, EventHandler, TrResultKey, Fid
+from sns_trade_bot.kiwoom.common import Job, ScnNo, RqName, EventHandler, TrResultKey, Fid, TrCode
 from sns_trade_bot.kiwoom.internal import KiwoomOcx
 
 logger = logging.getLogger(__name__)
@@ -118,6 +118,29 @@ class KiwoomEventHandler(EventHandler):
             order_id = self.ocx.get_comm_data(tr_code, record_name, 0, '주문번호').strip()
             logger.info(f'order_id:"{order_id}"')
             # TODO: Handle error case (empty order_id)
+        elif rq_name == RqName.당일손익상세요청.value:
+            single_dic = {}
+            self.print_tr_data(tr_code, record_name, 0, TrResultKey.TODAY_SINGLE)
+            당일실현손익_str: str = self.ocx.get_comm_data(tr_code, record_name, 0, '당일실현손익').strip()
+            single_dic['당일실현손익'] = 당일실현손익_str
+            count = self.ocx.get_repeat_cnt(tr_code, '당일실현손익상세')
+            logger.info(f'당일실현손익:"{당일실현손익_str}",  count:{count}')
+            multi_dic = {}
+            for i in range(count):
+                self.print_tr_data(tr_code, record_name, i, TrResultKey.TODAY_MULTI)
+                name = self.ocx.get_comm_data(tr_code, record_name, i, '종목명')
+                code = self.ocx.get_comm_data(tr_code, record_name, i, '종목코드')
+                cur_dic = {
+                    '매입단가': self.ocx.get_comm_data(tr_code, record_name, i, '매입단가'),
+                    '체결가': self.ocx.get_comm_data(tr_code, record_name, i, '체결가'),
+                    '체결량': self.ocx.get_comm_data(tr_code, record_name, i, '체결량'),
+                    '당일매도손익': self.ocx.get_comm_data(tr_code, record_name, i, '당일매도손익'),
+                    '손익율': self.ocx.get_comm_data(tr_code, record_name, i, '손익율')
+                }
+                multi_dic[f'{name}({code})'] = cur_dic
+            from sns_trade_bot.slack.webhook import MsgSender
+            send_today_job = Job(MsgSender.send_multi_dic_msg, single_dic, multi_dic)
+            self.tr_queue.put(send_today_job)
 
     def on_receive_real_data(self, code: str, real_type: str, real_data: str):
         logger.debug(f'code:"{code}", real_type:"{real_type}", real_data:"{real_data}"')
@@ -150,11 +173,13 @@ class KiwoomEventHandler(EventHandler):
 
             elif cur_time_str == '152900':
                 logger.info("장마감시간 1분전. 180초 후 계좌정보 확인")
-                QTimer().singleShot(180000, self._request_account_detail)
-                logger.info("장마감시간 1분전. 200초 후 slack 메시지 발송")
-                QTimer().singleShot(200000, self._send_account_to_slack)
-                logger.info("장마감시간 1분전. 230초 후 프로그램 종료")
-                QTimer().singleShot(230000, self._exit)
+                QTimer().singleShot(180000, self._request_today_earning)
+                logger.info("장마감시간 1분전. 200초 후 계좌정보 확인")
+                QTimer().singleShot(200000, self._request_account_detail)
+                logger.info("장마감시간 1분전. 220초 후 slack 메시지 발송")
+                QTimer().singleShot(220000, self._send_account_to_slack)
+                logger.info("장마감시간 1분전. 240초 후 프로그램 종료")
+                QTimer().singleShot(240000, self._exit)
 
         elif real_type == '주식체결':
             price_str = self.ocx.get_comm_real_data(code, Fid.현재가.value)
@@ -324,6 +349,16 @@ class KiwoomEventHandler(EventHandler):
         tr_code = 'OPW00004'  # 계좌평가현황요청
         is_next = 0  # 연속조회요청 여부 (0:조회 , 2:연속)
         return self.ocx.comm_rq_data(RqName.BALANCE.value, tr_code, is_next, ScnNo.BALANCE.value)
+
+    # TODO: Reduce duplicated function
+    def _request_today_earning(self):
+        logger.info(f'account: {self.data_manager.account}')
+        self.ocx.set_input_value('계좌번호', self.data_manager.account)
+        self.ocx.set_input_value('비밀번호', '')  # 사용안함(공백)
+        self.ocx.set_input_value('종목코드', '')  # 전문 조회할 종목코드
+        is_next = 0  # 연속조회요청 여부 (0:조회 , 2:연속)
+        return self.ocx.comm_rq_data(RqName.당일손익상세요청.value, TrCode.당일손익상세요청.value, is_next,
+                                     ScnNo.당일손익상세요청.value)
 
     def _send_account_to_slack(self):
         from sns_trade_bot.slack.webhook import MsgSender
