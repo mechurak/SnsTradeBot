@@ -199,10 +199,10 @@ class KiwoomEventHandler(EventHandler):
                     if strategy.enabled:
                         strategy.on_price_updated()
 
-            # 장마감 동시호가 시간 되기 전 (3시 15분경)
+            # 장마감 동시호가 시간 되기 전 (3시 18분경)
             cur_time_str = self.ocx.get_comm_real_data(code, Fid.체결시간.value)
             cur_time = int(cur_time_str)
-            if self.is_closing_called is False and 151500 < cur_time < 151505:
+            if self.is_closing_called is False and 151800 < cur_time < 151805:
                 logger.info(f'is_closing_called:{self.is_closing_called}. cur_time:{cur_time}')
                 for stock in self.data_manager.stock_dic.values():
                     if stock.qty > 0 and stock.remained_sell_qty == 0:

@@ -6,14 +6,14 @@ logger = logging.getLogger(__name__)
 
 class SellOnClosing(StrategyBase):
     NAME = 'sell_on_closing'
-    TARGET_TIME = '152500'
+    TARGET_TIME = '1518'
 
     def __init__(self, the_stock, the_param_dic):
         super().__init__(the_stock, the_param_dic)
         logger.info(f'{self.NAME} strategy created for {self.stock.name}')
 
     def on_time(self, cur_time_str: str):
-        if cur_time_str != self.TARGET_TIME:
+        if not cur_time_str.startswith(self.TARGET_TIME):
             return
 
         logger.info(f'SellOnClosing. time:"{cur_time_str}". {self.stock.name}({self.stock.code}), '

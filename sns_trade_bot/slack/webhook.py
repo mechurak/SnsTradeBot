@@ -79,6 +79,11 @@ class MsgSender:
                 }
             ]
         }
+        requests.post(webhook_url, json=payload)
+
+        payload = {
+            "blocks": []
+        }
         for k, cur_dic in multi_dic.items():
             block = {
                 "type": "section",
