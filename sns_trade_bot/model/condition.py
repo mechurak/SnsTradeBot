@@ -5,6 +5,7 @@ class SignalType(enum.Enum):
     UNDEFINED = 0
     BUY = 1
     SELL = 2
+    BUY_ON_CLOSING = 3
 
 
 class Condition:

@@ -170,6 +170,7 @@ class Kiwoom:
     def on_connect(self):
         logger.info('on_connect!!')
         self.data_manager.load()
+        self.load_cond_list()
         self.tr_account_detail()
         interest_code_list = self.data_manager.get_code_list(HoldType.INTEREST)
         self.tr_multi_code_detail(interest_code_list)

@@ -146,21 +146,7 @@ class KiwoomEventHandler(EventHandler):
         logger.debug(f'code:"{code}", real_type:"{real_type}", real_data:"{real_data}"')
         if real_type == '장시작시간':
             cur_time_str = self.ocx.get_comm_real_data(code, 20)
-            if cur_time_str == "152500":  # 15시 25분.
-                for stock in self.data_manager.stock_dic.values():
-                    if stock.remained_buy_qty == 0:
-                        for strategy in stock.buy_strategy_dic.values():
-                            if strategy.enabled:
-                                strategy.on_time(cur_time_str)
-
-            elif cur_time_str == '085900':
-                for stock in self.data_manager.stock_dic.values():
-                    if stock.remained_buy_qty == 0:
-                        for strategy in stock.buy_strategy_dic.values():
-                            if strategy.enabled:
-                                strategy.on_time(cur_time_str)
-
-            elif cur_time_str == '084000':
+            if cur_time_str == '084000':
                 logger.info("장시작시간 20분전. 1초 후 계좌정보 확인")
                 QTimer().singleShot(1000, self._request_account_detail)  # ms 후에 함수 실행
                 logger.info("장시작시간 20분전. 10초 후 slack 메시지 발송")
@@ -170,6 +156,29 @@ class KiwoomEventHandler(EventHandler):
                 logger.info("장시작시간 10분전. set_real_reg")
                 target_code_list = self.data_manager.get_code_list(HoldType.TARGET)
                 self._set_real_reg(target_code_list)
+
+            elif cur_time_str == '085900':
+                for stock in self.data_manager.stock_dic.values():
+                    if stock.remained_buy_qty == 0:
+                        for strategy in stock.buy_strategy_dic.values():
+                            if strategy.enabled:
+                                strategy.on_time(cur_time_str)
+
+            elif cur_time_str == '152100':
+                self._request_account_detail()
+
+            elif cur_time_str == '152200':
+                self.check_buy_on_closing_cond()
+
+            elif cur_time_str == '152300':
+                self._request_multi_code_info()
+
+            elif cur_time_str == "152800":  # 15시 28분.
+                for stock in self.data_manager.stock_dic.values():
+                    if stock.remained_buy_qty == 0:
+                        for strategy in stock.buy_strategy_dic.values():
+                            if strategy.enabled:
+                                strategy.on_time(cur_time_str)
 
             elif cur_time_str == '152900':
                 logger.info("장마감시간 1분전. 180초 후 계좌정보 확인")
@@ -274,6 +283,7 @@ class KiwoomEventHandler(EventHandler):
                 logger.info(f'{name}({code}) 청산 완료!!')
                 # TODO: 매수 전략 다른 게 있으면, 계속 실시간 받아야 함.
                 self.ocx.set_real_remove(ScnNo.REAL.value, code)
+                self.data_manager.remove_stock(code)
 
     def on_receive_real_condition(self, code: str, event_type: str, cond_name: str, cond_index: str):
         """조검검색 실시간 편입, 이탈 종목을 받을 시점을 알려준다.
@@ -332,6 +342,17 @@ class KiwoomEventHandler(EventHandler):
             temp_stock_list.append(Stock(self.data_manager.listener_list, code, name))
             logger.debug(f'  {name}({code})')
         self.data_manager.set_temp_stock_list(temp_stock_list)
+        if scr_no == ScnNo.COND_BUY.value:
+            from sns_trade_bot.strategy.buy_on_closing import BuyOnClosing
+            for i, stock in enumerate(temp_stock_list):
+                # TODO: 후보 종목들을 특정 필드로 정렬해서 개수 제한 (예수금 상황도 확인 필요)
+                if i > 10:
+                    logger.warning('too many temp_stock. skip further stocks')
+                    break
+                param_dic = BuyOnClosing.DEFAULT_PARAM
+                stock.add_buy_strategy('buy_on_closing', param_dic)
+            logger.info('invoke add_all_temp_stock()')
+            self.data_manager.add_all_temp_stock()
 
     def print_tr_data(self, tr_code, record_name, index, item_list):
         logger.debug(f'---- tr_code:"{tr_code}", record_name:"{record_name}", index:{index}')
@@ -360,6 +381,22 @@ class KiwoomEventHandler(EventHandler):
         return self.ocx.comm_rq_data(RqName.당일손익상세요청.value, TrCode.당일손익상세요청.value, is_next,
                                      ScnNo.당일손익상세요청.value)
 
+    # TODO: Reduce duplicated function
+    def _request_multi_code_info(self):
+        the_code_list = self.data_manager.get_code_list(HoldType.INTEREST)
+        logger.debug(f'the_code_list: {the_code_list}')
+        count = len(the_code_list)
+        if count == 0:
+            logger.error('code_list is empty!!')
+            return -1
+        code_list_str = ";".join(the_code_list)  # 종목리스트
+        is_next = 0  # 연속조회요청 여부
+        code_count = count  # 종목개수
+        type_flag = 0  # 조회구분 (0: 주식관심종목정보 , 선물옵션관심종목정보)
+        rq_name = RqName.INTEREST_CODE.value  # 사용자구분 명
+        scn_no = ScnNo.INTEREST.value  # 화면변호
+        return self.ocx.comm_kw_rq_data(code_list_str, is_next, code_count, type_flag, rq_name, scn_no)
+
     def _send_account_to_slack(self):
         from sns_trade_bot.slack.webhook import MsgSender
         MsgSender.send_balance(list(self.data_manager.stock_dic.values()))
@@ -374,6 +411,14 @@ class KiwoomEventHandler(EventHandler):
         fid_list = "9001;10;13"  # 종목코드,업종코드;현재가;누적거래량
         real_type = "0"  # 0: 최초 등록, 1: 같은 화면에 종목 추가
         self.ocx.set_real_reg(ScnNo.REAL.value, code_list_str, fid_list, real_type)
+
+    def check_buy_on_closing_cond(self):
+        for cond in self.data_manager.cond_dic.values():
+            if cond.signal_type is SignalType.BUY_ON_CLOSING:
+                query_type = 0  # 일반조회
+                logger.info(f'send_condition(0). ScnNo.COND_BUY. index:{cond.index}, name:{cond.name}')
+                ret = self.ocx.send_condition(ScnNo.COND_BUY.value, cond.name, cond.index, query_type)
+                logger.debug(f'send_condition(0). ret: {ret}')
 
 
 if __name__ == "__main__":
