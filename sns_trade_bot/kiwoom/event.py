@@ -168,7 +168,7 @@ class KiwoomEventHandler(EventHandler):
                 self._request_account_detail()
 
             elif cur_time_str == '152200':
-                self.check_buy_on_closing_cond()
+                self._check_buy_on_closing_cond()
 
             elif cur_time_str == '152300':
                 self._request_multi_code_info()
@@ -187,8 +187,10 @@ class KiwoomEventHandler(EventHandler):
                 QTimer().singleShot(200000, self._request_account_detail)
                 logger.info("장마감시간 1분전. 220초 후 slack 메시지 발송")
                 QTimer().singleShot(220000, self._send_account_to_slack)
-                logger.info("장마감시간 1분전. 240초 후 프로그램 종료")
-                QTimer().singleShot(240000, self._exit)
+                logger.info("장마감시간 1분전. 240초 후 전략 정리 후 save")
+                QTimer().singleShot(240000, self.arrange_strategy)
+                logger.info("장마감시간 1분전. 300초 후 프로그램 종료")
+                QTimer().singleShot(300000, self._exit)
 
         elif real_type == '주식체결':
             price_str = self.ocx.get_comm_real_data(code, Fid.현재가.value)
@@ -401,6 +403,19 @@ class KiwoomEventHandler(EventHandler):
         from sns_trade_bot.slack.webhook import MsgSender
         MsgSender.send_balance(list(self.data_manager.stock_dic.values()))
 
+    # TODO: Make it private
+    def arrange_strategy(self):
+        for stock in self.data_manager.stock_dic.values():
+            if stock.qty > 0:
+                logger.debug(f'clear buy_strategy_dic of {stock.name}')
+                stock.buy_strategy_dic.clear()
+                if 'sell_stop_loss' not in stock.sell_strategy_dic.keys():
+                    logger.debug(f'add sell_stop_loss to {stock.name}')
+                    from sns_trade_bot.strategy.sell_stop_loss import SellStopLoss
+                    stock.sell_strategy_dic['sell_stop_loss'] = SellStopLoss(stock, SellStopLoss.DEFAULT_PARAM)
+        self.data_manager.set_updated(DataType.TABLE_BALANCE)
+        self.data_manager.save()
+
     def _exit(self):
         logger.info('exit SnsTradeBot')
         # TODO: Pass app?
@@ -412,7 +427,7 @@ class KiwoomEventHandler(EventHandler):
         real_type = "0"  # 0: 최초 등록, 1: 같은 화면에 종목 추가
         self.ocx.set_real_reg(ScnNo.REAL.value, code_list_str, fid_list, real_type)
 
-    def check_buy_on_closing_cond(self):
+    def _check_buy_on_closing_cond(self):
         for cond in self.data_manager.cond_dic.values():
             if cond.signal_type is SignalType.BUY_ON_CLOSING:
                 query_type = 0  # 일반조회

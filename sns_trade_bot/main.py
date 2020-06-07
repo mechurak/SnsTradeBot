@@ -85,7 +85,7 @@ class Manager(UiListener, ModelListener):
 
     def btn_test_clicked(self):
         logger.info("btn_test_clicked")
-        self.kiwoom_manager.handler.check_buy_on_closing_cond()
+        self.kiwoom_manager.handler.arrange_strategy()
 
     # ModelListener
     def on_data_updated(self, data_type: DataType):
