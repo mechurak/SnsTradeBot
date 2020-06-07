@@ -8,7 +8,7 @@ class BuyOnClosing(StrategyBase):
     NAME = 'buy_on_closing'
     DEFAULT_BUDGET = 300  # 천원
     DEFAULT_PARAM = {'budget': DEFAULT_BUDGET}
-    TARGET_TIME = '152500'
+    TARGET_TIME = '152800'
 
     def __init__(self, the_stock, the_param_dic):
         super().__init__(the_stock, the_param_dic)
